@@ -1,0 +1,5 @@
+<launch>
+  <!-- System Monitoring -->
+  <node pkg="robot_diagnostics" type="system_monitor" respawn="false" name="system_monitor" output="screen">
+  </node>
+</launch>

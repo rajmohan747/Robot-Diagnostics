@@ -1,0 +1,5 @@
+<launch>
+
+  <test test-name="simple_monitor_test" pkg="monitoring_core" type="simple_monitor_test" />
+</launch>
+
