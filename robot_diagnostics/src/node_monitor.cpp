@@ -4,7 +4,7 @@
 /**
 * @brief  Constructor for the NodeMonitor
 */
-NodeMonitor::NodeMonitor(std::unique_ptr <Statistics> stat):m_statistics(std::move(stat))
+NodeMonitor::NodeMonitor(std::unique_ptr <NodeStatistics> stat):m_statistics(std::move(stat))
 {
     ROS_INFO("Node monitor constructor initialized");
 }
@@ -23,7 +23,7 @@ NodeMonitor::~NodeMonitor()
 */
 void NodeMonitor::nodeMonitoring()
 {
-    m_statistics->updateStatistics();
+    m_statistics->updateNodeStatistics();
 }
 
 
@@ -33,7 +33,7 @@ void NodeMonitor::nodeMonitoring()
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "node_monitoring");
-    std::unique_ptr<Statistics> statisticsPtr(new Statistics);
+    std::unique_ptr<NodeStatistics> statisticsPtr(new NodeStatistics);
     NodeMonitor node_monitor(std::move(statisticsPtr));
     //NodeMonitor node_monitor(new Statistics());
     ros::Rate rate(1);

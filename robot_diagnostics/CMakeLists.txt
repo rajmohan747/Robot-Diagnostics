@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   monitoring_core
+  roslib
 
 )
 
@@ -36,14 +37,6 @@ include_directories(
 )
 
 
-add_executable(robot_diagnostics
-  src/robot_diagnostics.cpp
-)
-
-target_link_libraries(robot_diagnostics
-  ${catkin_LIBRARIES}
-)
-
 
 add_executable(node_monitoring
   src/node_monitor.cpp
@@ -54,15 +47,24 @@ target_link_libraries(node_monitoring
   ${catkin_LIBRARIES} 
 )
 
-add_executable(system_monitor
+add_executable(system_monitoring
   src/system_monitor.cpp
   src/system_statistics.cpp
 )
 
-target_link_libraries(system_monitor
+target_link_libraries(system_monitoring
   ${catkin_LIBRARIES}
 )
 
+
+add_executable(topic_monitoring
+  src/topic_monitor.cpp
+  src/topic_statistics.cpp
+)
+
+target_link_libraries(topic_monitoring
+  ${catkin_LIBRARIES}
+)
 #add_dependencies(trajectory_controller ${PROJECT_NAME}_gencfg)
 
 #find_package(PythonLibs REQUIRED)

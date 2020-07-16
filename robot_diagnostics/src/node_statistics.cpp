@@ -4,7 +4,7 @@
 /**
 * @brief  Constructor for the Statistics
 */
-Statistics::Statistics()
+NodeStatistics::NodeStatistics()
 {
    ROS_INFO("Statistics constructor called");
    nh.getParam("/nodes", m_initialNodeList);
@@ -15,15 +15,16 @@ Statistics::Statistics()
   // std::unique_ptr<Monitor>m_monitor(new Monitor(nh, "Node Statistic Monitor", true));
   m_monitor = new Monitor(nh, "Node Statistic Monitor", true);
   m_ramSize = getRamSize();
-  ROS_WARN("Ram size : %ld",m_ramSize);
+  ///ROS_WARN("Ram size : %ld",m_ramSize);
    //ROS_ERROR("Initial list size : %d",m_initialNodeList.size());
+
 }
 
 /**
 * @brief  Destructor for the Statistics
 */
 
-Statistics::~Statistics()
+NodeStatistics::~NodeStatistics()
 {
     delete m_monitor;
 }
@@ -33,8 +34,9 @@ Statistics::~Statistics()
 /**
 * @brief Updates the node related statistics
 */
-void Statistics::updateStatistics()
+void NodeStatistics::updateNodeStatistics()
 {
+    ROS_WARN("Loop called");
     m_nodeListCopy.clear();
     m_nodeListCopy.resize(0);
     //ros::master::getNodes(m_nodeListOriginal);
@@ -50,7 +52,7 @@ void Statistics::updateStatistics()
     for(std::vector<std::string>::iterator i(m_nodeListCopy.begin());i != m_nodeListCopy.end();++i)
     {
 
-      bool isAvailable = checkNodeAvailability(*i);
+      bool isAvailable = isValidNode(*i);
       if(isAvailable)
       {
         //std::cout << *i << std::endl;
@@ -73,17 +75,17 @@ void Statistics::updateStatistics()
           else
           {
 
-            m_memPercentage     = computeMemoryUsage(currentPid)*100/(m_ramSize/1024); 
+            m_memPercentage     = computeNodeMemoryPercentage(currentPid)*100/(m_ramSize/1024); 
             //m_upTime       = UpTime(currentPid);
-            m_cpuPercentage     = computeCPUUsage(currentPid);
+            m_cpuPercentage     = computeNodeCPUPercentage(currentPid);
           }
 
         }
-        cpuStatistics(*i);
-        memoryStatistics(*i);
-        timeStatistics(*i);
-        nodeStatus(*i);
-        nodePingStatus(*i);
+        updateCpuStatus(*i);
+        updateMemoryStatus(*i);
+        updateTimeStatus(*i);
+        updateNodeStatus(*i);
+        updateNodePingStatus(*i);
       }
       else
       {
@@ -111,7 +113,7 @@ void Statistics::updateStatistics()
 * @brief Computes the PID for a particular node
 * @returns the PID as a string
 */
-std::string Statistics::getPid(std::string nodeName)
+std::string NodeStatistics::getPid(std::string nodeName)
 {
   // Convert string to const char * as system requires 
   // parameter of type const char * - for system()
@@ -128,6 +130,7 @@ std::string Statistics::getPid(std::string nodeName)
 
   /*Opens up a read-only stream, runs the command and captures the output,
    stuffs it into the buffer and returns it as a string.*/
+//  std::unique_lock<std::mutex> lock (m_mutex);
   FILE *stream = popen(str.c_str(), "r");
   if (stream) 
   {
@@ -150,7 +153,7 @@ std::string Statistics::getPid(std::string nodeName)
 }
 
 
-void Statistics::cpuStatistics(std::string &node_name)
+void NodeStatistics::updateCpuStatus(std::string &node_name)
 {
     std::string key = node_name + "/cpu_usage";
     m_monitor->addValue(key, m_cpuPercentage, "%", 0.0, AggregationStrategies::FIRST);
@@ -158,7 +161,7 @@ void Statistics::cpuStatistics(std::string &node_name)
 }
 
 
-void Statistics::memoryStatistics(std::string &node_name)
+void NodeStatistics::updateMemoryStatus(std::string &node_name)
 {
     std::string key = node_name + "/memory_usage";    
     m_monitor->addValue(key, m_memPercentage, "%", 0.0, AggregationStrategies::FIRST);
@@ -167,7 +170,7 @@ void Statistics::memoryStatistics(std::string &node_name)
 /**
 * @brief Computes the total time spend since the node is started
 */
-void Statistics::timeStatistics(std::string &node_name)
+void NodeStatistics::updateTimeStatus(std::string &node_name)
 {
     std::string key = node_name + "/cpu_time";
     std::string time = "Time from start for "+  node_name + " : ";
@@ -179,7 +182,7 @@ void Statistics::timeStatistics(std::string &node_name)
 /**
 * @brief Checks the node status
 */
-void Statistics::nodeStatus(std::string &node_name)
+void NodeStatistics::updateNodeStatus(std::string &node_name)
 {
    std::string key = node_name;
    std::string value ="";
@@ -189,10 +192,52 @@ void Statistics::nodeStatus(std::string &node_name)
 
 }
 
+
+
+/**
+* @brief Checks whether a node is alive or not by pinging it
+*/
+void NodeStatistics::updateNodePingStatus(std::string &node_name)
+{
+  std::string nodeXmlrpcURI = getNodeXmlrpcURI(node_name);
+  std::string data;
+  int max_buffer = 256;
+  char buffer[max_buffer]; 
+  std::string str = "rosnode ping -a | grep " + nodeXmlrpcURI;
+/*Opens up a read-only stream, runs the command and captures the output,
+   stuffs it into the buffer and returns it as a string.*/
+  std::unique_lock<std::mutex> lock (m_mutex);
+  FILE *stream = popen(str.c_str(), "r");
+  if (stream) 
+  {
+    while (!feof(stream))
+    {
+        if (fgets(buffer, max_buffer, stream) != NULL) 
+        {
+        	data.append(buffer);
+        }  
+        
+    }
+    
+    pclose(stream);
+
+    //return data;
+
+    std::istringstream linestream(data);
+    std::string l1,l2,l3,l4,l5;
+
+    linestream>>l1>>l2>>l3>>l4>>l5;
+    std::string key = node_name+"/ping_rate";
+    float value =std::stof(l5.substr(5,5));
+    double error_level = 0.0; 
+    m_monitor->addValue(key, value, "ms", error_level, AggregationStrategies::FIRST);
+   }	  
+}
+
 /**
 * @brief Computes status of node whether it's alive,dead,sleeping etc
 */
-void Statistics::getErrorValueFromState(std::string &node_name,std::string &value, double &error_level)
+void NodeStatistics::getErrorValueFromState(std::string &node_name,std::string &value, double &error_level)
 {
     /* Providing the desciption of the state based on state context */
     switch (m_nodeState)
@@ -247,49 +292,12 @@ void Statistics::getErrorValueFromState(std::string &node_name,std::string &valu
     }
 }
 
-/**
-* @brief Checks whether a node is alive or not by pinging it
-*/
-void Statistics::nodePingStatus(std::string &node_name)
-{
-  std::string nodeXmlrpcURI = getNodeXmlrpcURI(node_name);
-  std::string data;
-  int max_buffer = 256;
-  char buffer[max_buffer]; 
-  std::string str = "rosnode ping -a | grep " + nodeXmlrpcURI;
-/*Opens up a read-only stream, runs the command and captures the output,
-   stuffs it into the buffer and returns it as a string.*/
-  FILE *stream = popen(str.c_str(), "r");
-  if (stream) 
-  {
-    while (!feof(stream))
-    {
-        if (fgets(buffer, max_buffer, stream) != NULL) 
-        {
-        	data.append(buffer);
-        }  
-        
-    }
-    
-    pclose(stream);
 
-    //return data;
-
-    std::istringstream linestream(data);
-    std::string l1,l2,l3,l4,l5;
-
-    linestream>>l1>>l2>>l3>>l4>>l5;
-    std::string key = node_name+"/ping_rate";
-    float value =std::stof(l5.substr(5,5));
-    double error_level = 0.0; 
-    m_monitor->addValue(key, value, "ms", error_level, AggregationStrategies::FIRST);
-   }	  
-}
 
 /**
 * @returns the nodexmlrpcURI corresponding to the node provided
 */
-std::string Statistics::getNodeXmlrpcURI(std::string &node_name)
+std::string NodeStatistics::getNodeXmlrpcURI(std::string &node_name)
 {
   std::string data;
   int max_buffer = 256;
@@ -297,6 +305,7 @@ std::string Statistics::getNodeXmlrpcURI(std::string &node_name)
   std::string str = "rosnode list -a | grep " + node_name;
 /*Opens up a read-only stream, runs the command and captures the output,
    stuffs it into the buffer and returns it as a string.*/
+  std::unique_lock<std::mutex> lock (m_mutex);
   FILE *stream = popen(str.c_str(), "r");
   if (stream) 
   {
@@ -334,7 +343,7 @@ std::string Statistics::getNodeXmlrpcURI(std::string &node_name)
 * @brief Computes the total time spend since the process started
 * @returns the time in seconds
 */
-long Statistics::ActiveJiffies(std::string pid) 
+long NodeStatistics::ActiveJiffies(std::string pid) 
 { 
   long activeJiffies;
   std::string line;
@@ -361,7 +370,7 @@ long Statistics::ActiveJiffies(std::string pid)
 * @returns the cpu usage in %
 * @ref https://stackoverflow.com/questions/16726779/how-do-i-get-the-total-cpu-usage-of-an-application-from-proc-pid-stat/16736599#16736599
 */
-double Statistics::computeCPUUsage(std::string pid)
+double NodeStatistics::computeNodeCPUPercentage(std::string pid)
 {
     double active_jiffies = (float)(ActiveJiffies(pid));
     m_upTime       = (float)(UpTime(pid));
@@ -373,11 +382,12 @@ double Statistics::computeCPUUsage(std::string pid)
 * @brief Computes the RAM usage for a particular PID
 * @returns the RAM usage in Mb
 */
-double Statistics::computeMemoryUsage(std::string pid)
+double NodeStatistics::computeNodeMemoryPercentage(std::string pid)
 {
   std::string line,key,unit;
   long value;
   std::ifstream inFile(kProcDirectory + "/" + pid + kStatusFilename);
+//  std::unique_lock<std::mutex> lock (m_mutex);
   if(inFile.is_open())
   {
   	while(std::getline(inFile,line))
@@ -401,11 +411,12 @@ double Statistics::computeMemoryUsage(std::string pid)
 * @brief Computes the up time for the system
 * @returns the uptime in seconds
 */
-long Statistics::UpTime() 
+long NodeStatistics::UpTime() 
 {
   std::string line;
   long upTime, idleTime;
   std::ifstream inFile(kProcDirectory + kUptimeFilename);
+//  std::unique_lock<std::mutex> lock (m_mutex);
   if (inFile.is_open()) 
   {
     std::getline(inFile, line);
@@ -420,13 +431,14 @@ long Statistics::UpTime()
 * @brief Computes the up time for a particular PID
 * @returns the uptime in seconds
 */
-long Statistics::UpTime(std::string pid)
+long NodeStatistics::UpTime(std::string pid)
 {
   std::string line;
   std::string value;
   long seconds;
   std::vector<std::string> input;
   std::ifstream filestream(kProcDirectory + pid + kStatFilename);
+//  std::unique_lock<std::mutex> lock (m_mutex);
   if (filestream.is_open()) 
   {
     std::getline(filestream, line);
@@ -449,7 +461,7 @@ long Statistics::UpTime(std::string pid)
 * @brief Computes the elapsed time in the format HH:MM:SS
 * @returns the time as  a string
 */
-std::string Statistics::ElapsedTime(long elapsedSeconds) 
+std::string NodeStatistics::ElapsedTime(long elapsedSeconds) 
 {
   std::string Time = "";
   int hours, minutes, seconds, time;
@@ -496,11 +508,12 @@ std::string Statistics::ElapsedTime(long elapsedSeconds)
 * @brief Acquires the RAM size of the processor
 * @returns the RAM size in Kb
 */
-long Statistics::getRamSize() 
+long NodeStatistics::getRamSize() 
 {
   std::string line, key;
   long int value, MemTotal;
   std::ifstream inFile(kProcDirectory + kMeminfoFilename);
+//  std::unique_lock<std::mutex> lock (m_mutex);
   if (inFile.is_open()) {
     while (std::getline(inFile, line)) 
     {
@@ -522,7 +535,7 @@ long Statistics::getRamSize()
 * @brief checks whehter the given node name is currently registered with ros master
 * @returns true if the node is available,else false;
 */
-bool Statistics::checkNodeAvailability(std::string &node_name)
+bool NodeStatistics::isValidNode(std::string &node_name)
 {
   std::vector<std::string> currentNodeList;
   ros::master::getNodes(currentNodeList);

@@ -1,10 +1,10 @@
-#include "system_monitor.h"
+#include "topic_monitor.h"
 
 
 /**
 * @brief  Constructor for the NodeMonitor
 */
-SystemMonitor::SystemMonitor(std::unique_ptr <SystemStatistics> stat):m_statistics(std::move(stat))
+TopicMonitor::TopicMonitor(std::unique_ptr <TopicStatistics> stat):m_statistics(std::move(stat))
 {
     ROS_INFO("System monitor constructor initialized");
 }
@@ -13,7 +13,7 @@ SystemMonitor::SystemMonitor(std::unique_ptr <SystemStatistics> stat):m_statisti
 * @brief  Destructor for the NodeMonitor
 */
 
-SystemMonitor::~SystemMonitor()
+TopicMonitor::~TopicMonitor()
 {
 
 }
@@ -21,9 +21,9 @@ SystemMonitor::~SystemMonitor()
 /**
 * @brief  Collects the updated data related to node monitoring
 */
-void SystemMonitor::systemMonitoring()
+void TopicMonitor::topicMonitoring()
 {
-    m_statistics->updateSystemStatistics();
+    m_statistics->updateTopicStatistics();
 }
 
 
@@ -32,9 +32,9 @@ void SystemMonitor::systemMonitoring()
 */
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "system_monitoring");
-    std::unique_ptr<SystemStatistics> statisticsPtr(new SystemStatistics);
-    SystemMonitor system_monitor(std::move(statisticsPtr));
+    ros::init(argc, argv, "topic_monitoring");
+    std::unique_ptr<TopicStatistics> statisticsPtr(new TopicStatistics);
+    TopicMonitor topic_monitor(std::move(statisticsPtr));
     //NodeMonitor node_monitor(new Statistics());
     ros::Rate rate(5);
 
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 
     while(ros::ok())
     {
-        system_monitor.systemMonitoring();
+        topic_monitor.topicMonitoring();
         rate.sleep();
         ros::spinOnce();
     }

@@ -8,7 +8,7 @@
 #include <fstream>
 #include <unistd.h>
 #include "unordered_map"
-
+#include <mutex>
 
 const std::string kProcDirectory{"/proc/"};
 const std::string kStatusFilename{"/status"};
@@ -39,19 +39,24 @@ public:
      /* Destructor for the Ros class */
     ~SystemStatistics();
 
-    void updateStatistics();
+    void updateSystemStatistics();
 private:
     ros::NodeHandle nh;
 
     /*Member Functions*/
-
-    double MemoryUtilization(); 
-    std::vector<std::string> CpuUtilization();
-    long ActiveJiffies();
-    long IdleJiffies();  
-    double Utilization();
+    void getAverageCPULoad();
     int getNumberOfCores();
     int getCoreTemperature(int core);
+    double MemoryUtilization(); 
+    double Utilization();
+    long ActiveJiffies();
+    long IdleJiffies();  
+    std::vector<std::string> CpuUtilization();
+
+    float m_averageLoad[3] ={0.0,0.0,0.0};
+    //float m_averageLoad_1_min,m_averageLoad_5_min,m_averageLoad_15_min;
+
+    std::mutex m_mutex;
 
 
 };

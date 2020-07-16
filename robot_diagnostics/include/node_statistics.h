@@ -1,5 +1,5 @@
-#ifndef STATISTICS_H
-#define STATISTICS_H
+#ifndef NODE_STATISTICS_H
+#define NODE_STATISTICS_H
 
 #include <iostream>
 #include <ros/ros.h>
@@ -10,6 +10,7 @@
 #include "XmlRpc.h"
 #include "unordered_map"
 #include <memory>
+#include <mutex>
 #include "monitoring_core/monitor.h"
 
 const std::string kProcDirectory{"/proc/"};
@@ -31,17 +32,17 @@ enum CPUStates {
   kGuest_,
   kGuestNice_
 };
-class Statistics
+class NodeStatistics
 {
 public:
 
     /* Constructor for the Ros class */ 
-    Statistics();
+    NodeStatistics();
 
      /* Destructor for the Ros class */
-    ~Statistics();
+    ~NodeStatistics();
 
-    void updateStatistics();
+    void updateNodeStatistics();
 private:
     ros::NodeHandle nh;
 
@@ -50,22 +51,21 @@ private:
     long UpTime();
     long UpTime(std::string pid);
     long ActiveJiffies(std::string pid);
-    double computeCPUUsage(std::string pid); 
-    double computeMemoryUsage(std::string pid);
+    double computeNodeCPUPercentage(std::string pid); 
+    double computeNodeMemoryPercentage(std::string pid);
 
-
-    std::string pingPid(std::string nodeName);
     std::string getPid(std::string nodeName);
     std::string getNodeXmlrpcURI(std::string &node_name);
     std::string ElapsedTime(long elapsedSeconds); 
-    bool checkNodeAvailability(std::string &nodeName);;
+    bool isValidNode(std::string &nodeName);;
 
-    void cpuStatistics(std::string &node_name);
-    void memoryStatistics(std::string &node_name);
-    void timeStatistics(std::string &node_name);
-    void nodeStatus(std::string &node_name);
+    void updateCpuStatus(std::string &node_name);
+    void updateMemoryStatus(std::string &node_name);
+    void updateTimeStatus(std::string &node_name);
+    void updateNodeStatus(std::string &node_name);
+    void updateNodePingStatus(std::string &node_name);
+
     void getErrorValueFromState(std::string &node_name,std::string &value, double &error_level);
-    void nodePingStatus(std::string &node_name);
 
     bool m_setup = false;
     double m_memPercentage,m_cpuPercentage;
@@ -74,6 +74,7 @@ private:
     std::vector<std::string> m_initialNodeList;
     std::vector<std::string> m_nodeListOriginal,m_nodeListCopy;
     std::unordered_map<std::string, std::string> m_nodeLog; 
+    std::mutex m_mutex;
     char m_nodeState;
 
     //std::unique_ptr<Monitor> m_monitor;

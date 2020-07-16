@@ -29,19 +29,20 @@ SystemStatistics::~SystemStatistics()
 /**
 * @brief Updates the node related statistics
 */
-void SystemStatistics::updateStatistics()
+void SystemStatistics::updateSystemStatistics()
 {
     
-    std::cout <<"Memory utilization in % " << MemoryUtilization() << std::endl;
-    std::cout << "CPU utilization in % "   << Utilization() <<std::endl;
+   // std::cout <<"Memory utilization in % " << MemoryUtilization() << std::endl;
+   // std::cout << "CPU utilization in % "   << Utilization() <<std::endl;
     int numberOfCores = getNumberOfCores();
-    std::cout << "Number of cores : " <<numberOfCores << std::endl;
+  //  std::cout << "Number of cores : " <<numberOfCores << std::endl;
     for(int i =0; i<numberOfCores;i++)
     {
       int coreTemperature = getCoreTemperature(i);
-      std::cout << "Core temperature of "<< i << " th core is  "<< coreTemperature << std::endl;
+     // std::cout << "Core temperature of "<< i << " th core is  "<< coreTemperature << std::endl;
     }
-    std::cout <<"\n";
+  //  std::cout <<"\n";
+    getAverageCPULoad();
 
 }
 
@@ -177,7 +178,7 @@ int SystemStatistics::getNumberOfCores()
     {
         if (fgets(buffer, max_buffer, stream) != NULL) 
         {
-          std::cout << data << std::endl;
+          //std::cout << data << std::endl;
         	data.append(buffer);
         }  
         
@@ -222,7 +223,7 @@ int SystemStatistics::getCoreTemperature(int core)
     {
         if (fgets(buffer, max_buffer, stream) != NULL) 
         {
-          std::cout << data << std::endl;
+          //std::cout << data << std::endl;
         	data.append(buffer);
         }  
         
@@ -236,4 +237,55 @@ int SystemStatistics::getCoreTemperature(int core)
     //return data.substr(0, data.length() - 1);
    }
    return -1;	
+}
+
+
+void SystemStatistics::getAverageCPULoad()
+{
+    // Convert string to const char * as system requires 
+  // parameter of type const char * - for system()
+  std::string data;
+  int max_buffer = 256;
+  char buffer[max_buffer]; 
+  std::string str = "uptime";
+  //const char *command = str.c_str(); 
+  //system(command); 
+  
+
+  /*The system command is often run first, before any output commands and the function 
+  returns an integer indicating success or failure, but not the output of the string*/
+
+  /*Opens up a read-only stream, runs the command and captures the output,
+   stuffs it into the buffer and returns it as a string.*/
+
+  std::unique_lock<std::mutex> lock(m_mutex);
+
+  FILE *stream = popen(str.c_str(), "r");
+  if (stream) 
+  {
+    while (!feof(stream))
+    {
+        if (fgets(buffer, max_buffer, stream) != NULL) 
+        {
+          
+        	data.append(buffer);
+        } 
+        std::string str1,str2;
+
+        std::string mainString = "load average: ";
+        /*Finding the position of the mainString in the data string*/
+        int stringPosition = data.find(mainString); 
+        //std::cout << "Found at "<< stringPosition <<std::endl;
+        std::string subString = data.substr(stringPosition);
+
+        std::replace(subString.begin(),subString.end(),':',' ');
+        std::replace(subString.begin(),subString.end(),',',' ');
+        std::istringstream linestream(subString);
+        linestream >> str1 >> str2 >> m_averageLoad[0] >> m_averageLoad[1] >> m_averageLoad[2];
+        std::cout << "Read data  " << m_averageLoad[0] << "  "<<m_averageLoad[1]<< "  "<<m_averageLoad[2] << std::endl;
+    }
+    
+    pclose(stream);
+
+   }
 }

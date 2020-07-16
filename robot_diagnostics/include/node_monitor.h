@@ -7,7 +7,7 @@ class NodeMonitor
 public:
 
     /* Constructor for the Ros class */ 
-    NodeMonitor(std::unique_ptr <Statistics> stat);
+    NodeMonitor(std::unique_ptr <NodeStatistics> stat);
 
      /* Destructor for the Ros class */
     ~NodeMonitor();
@@ -16,7 +16,7 @@ public:
 
 private:
     /*ROS Node Handler*/
-     std::unique_ptr <Statistics> m_statistics;
+     std::unique_ptr <NodeStatistics> m_statistics;
     //Statistics* m_statistics;
 
 };
