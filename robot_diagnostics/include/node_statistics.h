@@ -12,26 +12,11 @@
 #include <memory>
 #include <mutex>
 #include "monitoring_core/monitor.h"
-
-const std::string kProcDirectory{"/proc/"};
-const std::string kStatusFilename{"/status"};
-const std::string kUptimeFilename{"/uptime"};
-const std::string kStatFilename{"/stat"};
-const std::string kMeminfoFilename{"/meminfo"};
+#include "utils.h"
 
 
-enum CPUStates {
-  kUser_ = 0,
-  kNice_,
-  kSystem_,
-  kIdle_,
-  kIOwait_,
-  kIRQ_,
-  kSoftIRQ_,
-  kSteal_,
-  kGuest_,
-  kGuestNice_
-};
+
+
 class NodeStatistics
 {
 public:

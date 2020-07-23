@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     std::unique_ptr<SystemStatistics> statisticsPtr(new SystemStatistics);
     SystemMonitor system_monitor(std::move(statisticsPtr));
     //NodeMonitor node_monitor(new Statistics());
-    ros::Rate rate(5);
+    ros::Rate rate(1);
 
     //boost::thread* controller_thread = new boost::thread(boost::bind(&NavigationWrapper::controlFlow, &controller));
 

@@ -1,0 +1,16 @@
+monitors:
+  Node:
+    type: NodeAnalyser
+    monitors:
+      ping:
+        type: Critical
+        key: " is unavailable"
+        action: "IntimateProcess"
+      memory:
+        type: NonCritical
+        key: "/Memory_Usage"
+        action: "AlertWarning"
+      cpu:
+        type: NonCritical
+        key: "/CPU_Usage"
+        action: "AlertWarning"

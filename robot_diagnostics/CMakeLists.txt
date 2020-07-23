@@ -12,8 +12,11 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   monitoring_core
   roslib
-
+  robot_activity
+  ros_type_introspection
+  topic_tools
 )
+
 
 
 #generate_dynamic_reconfigure_options(cfg/controller.cfg)
@@ -26,6 +29,9 @@ catkin_package(
     rospy
     std_msgs
     monitoring_core
+    robot_activity
+    ros_type_introspection
+    topic_tools
 )
 ###########
 ## Build ##
@@ -65,6 +71,26 @@ add_executable(topic_monitoring
 target_link_libraries(topic_monitoring
   ${catkin_LIBRARIES}
 )
+
+add_executable(diagnostics_server
+  src/diagnostics_server.cpp
+)
+
+target_link_libraries(diagnostics_server
+  ${catkin_LIBRARIES}
+)
+
+add_executable(xmlrpc
+  src/xmlrpc.cpp
+)
+
+target_link_libraries(xmlrpc
+  ${catkin_LIBRARIES}
+)
+
+
+
+
 #add_dependencies(trajectory_controller ${PROJECT_NAME}_gencfg)
 
 #find_package(PythonLibs REQUIRED)

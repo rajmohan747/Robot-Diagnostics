@@ -1,27 +1,36 @@
-#include <ros/console.h> 
 #include "topic_statistics.h"
-#include <ros/package.h>
 
-/**
-* @brief  Constructor for the Statistics
-*/
-TopicStatistics::TopicStatistics()
+    /**
+    * @brief  Constructor for the TrajectoryController
+    */
+
+std::string GenericSubsriber::md5 = "*";
+
+std::string GenericSubsriber::data_type = "/";
+
+TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency)
 {
-   ROS_INFO("TopicStatistics constructor called");
-   std::vector<std::string> initialTopicList;
-   nh.getParam("/topics", initialTopicList);
-   nh.getParam("/filter_type", m_topicFilterType);
+    m_topic                 = topicName;
+    m_expectedFrequency     = topicFrequency;
+    nh.getParam("minAcceptableFrequencyFactor", m_minAcceptableFrequencyFactor);
+    ROS_WARN("Frequency statsistics constructor initialized with for %s with expected frequency of  %f Hz",m_topic.c_str(),topicFrequency);
+    /*Subscribers*/
+    universalSub = nh.subscribe(m_topic, 1, &TopicStatistics::genericMessageCallback, this);
 
-  validTopicList(initialTopicList,m_validTopicList);
-  applyTopicFilter();
-   /*Gets all the nodes registered in the ROS master and stores it in a vector m_nodeListOriginal*/
-   //ros::master::getNodes(m_nodeListOriginal);
 
-   //ROS_ERROR("Initial list size : %d",m_initialNodeList.size());
+    double timerUpdateFrequency = std::min(1.0,m_expectedFrequency);
+    
+    /*Timer*/
+    topicStatusTimer = nh.createTimer(ros::Duration(1.0 / timerUpdateFrequency), &TopicStatistics::timerCallback, this);
+    
+    /*Initialization of time variables*/
+    m_currentTime = m_lastTime = millis();
+    m_startTime   = m_endTime  = millis();
+
 }
 
 /**
-* @brief  Destructor for the Statistics
+* @brief  Destructor for the FrequencyStatistics
 */
 
 TopicStatistics::~TopicStatistics()
@@ -29,102 +38,60 @@ TopicStatistics::~TopicStatistics()
 
 }
 
-void TopicStatistics::validTopicList(const std::vector<std::string> &initialTopicList,std::vector<std::string> &validTopicList)
+void TopicStatistics::timerCallback(const ros::TimerEvent &e)
 {
-
-  getAllTopics();
-  std::string path = ros::package::getPath("robot_diagnostics");
-  int invalidTopicCount = 0;
-  int totalTopicCount   = initialTopicList.size();
-  for(auto topic:initialTopicList)
-  {
-    bool isValid = isValidTopic(topic);
-    if(isValid == false)
+    if(m_setup)
     {
-      invalidTopicCount = invalidTopicCount + 1;
-      if((invalidTopicCount == totalTopicCount) && (m_topicFilterType == FilterType::ADD))
-      {
-        ROS_ERROR("Please re-check the topics provided in the yaml file %s/config/topic_monitor.yaml",path.c_str());
-        exit(0);
-      }
-
+        ROS_INFO("Topic %s is updating with %f Hz",m_topic.c_str(),m_averageFrequency);
+        if(m_currentSize == m_lastSize)
+        {
+            ROS_WARN("No data received current : %d last :%d",m_currentSize,m_lastSize);
+        }
+            
+        
+        if(m_averageFrequency < m_minAcceptableFrequencyFactor*m_expectedFrequency)
+        {
+            ROS_ERROR("Message updation of %s is slow with : %f",m_topic.c_str(),m_averageFrequency);
+        }
+        m_lastSize = m_currentSize;
+        m_endTime  = m_startTime;
     }
-    else
-    {
-      validTopicList.push_back(topic);
-    }
-  }
-
 }
 
 
-void TopicStatistics::getAllTopics()
+void TopicStatistics::genericMessageCallback(const GenericSubsriber &data)
 {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_currentTime = millis();
+    m_deltaTime = m_currentTime - m_lastTime;
 
-  ros::master::V_TopicInfo master_topics;
-  ros::master::getTopics(master_topics);
+    m_timeDifferences.push_back(m_deltaTime);
+    m_lastTime    = m_currentTime;
 
-  for (ros::master::V_TopicInfo::iterator it = master_topics.begin() ; it != master_topics.end(); it++) 
-  {
-    m_topicListOriginal.push_back((*it).name);
-  }
 
-}
-bool TopicStatistics::isValidTopic(std::string &topic_name)
-{
-
-  for(auto topic : m_topicListOriginal)
-  {
-    if(topic == topic_name)
+    if(m_currentSize > pow(2,20))
     {
-      return true;
-    }
-  }
-  return false;
-
-}
-
-void TopicStatistics::applyTopicFilter()
-{
-
-  m_topicListCopy.clear();
-  m_topicListCopy.resize(0);
-    //ros::master::getNodes(m_nodeListOriginal);
-  m_topicListCopy = m_topicListOriginal;
-    //ROS_WARN("Node list size original : %d  copy : %d  inital  %d",nodeListOriginal.size(),nodeListCopy.size(),initialNodeList.size());
-
-  if(m_topicFilterType == FilterType::DEFAULT)
-  {
-    ROS_WARN("Default filter type");
-    m_topicListCopy = m_topicListOriginal;
-  }
-  else if (m_topicFilterType == FilterType::ADD)
-  {
-    ROS_WARN("ADD filter type");
-    m_topicListCopy = m_validTopicList;
-  }
-  else
-  {
-    ROS_WARN("Remove filter type");
-    for (std::vector<std::string>::iterator it(m_validTopicList.begin()); it != m_validTopicList.end(); ++it)
-    {
-      m_topicListCopy.erase(std::remove(begin(m_topicListCopy), end(m_topicListCopy), *it), end(m_topicListCopy));
+        m_timeDifferences.clear();
+        m_timeDifferences.resize(0);
+        m_currentSize = m_lastSize = 0;
+        ROS_ERROR("Resetting the counters");
     }
 
-  }
+    m_currentSize = m_timeDifferences.size();
+    
+    if(m_currentSize > 5)
+    {
+        std::vector<double> lastNTimeDifferences (m_timeDifferences.end() - 5, m_timeDifferences.end());
+        double averageTime  = accumulate(lastNTimeDifferences.begin(), lastNTimeDifferences.end(), 0)/lastNTimeDifferences.size();
+        m_averageFrequency  = 1000.0/averageTime;
+        m_setup   = true;
+     }
 
 }
 
-/**
-* @brief Updates the node related statistics
-*/
-void TopicStatistics::updateTopicStatistics()
+uint64_t TopicStatistics::millis() 
 {
-  getAllTopics();
-  for(std::vector<std::string>::iterator i(m_topicListCopy.begin());i != m_topicListCopy.end();++i)
-  {
-    std::cout <<"Topics after filtering are : "<< *i << std::endl; 
-  }
-
+	uint64_t ms =std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+	return ms;
 }
 

@@ -9,26 +9,9 @@
 #include <unistd.h>
 #include "unordered_map"
 #include <mutex>
+#include "monitoring_core/monitor.h"
+#include "utils.h"
 
-const std::string kProcDirectory{"/proc/"};
-const std::string kStatusFilename{"/status"};
-const std::string kUptimeFilename{"/uptime"};
-const std::string kStatFilename{"/stat"};
-const std::string kMeminfoFilename{"/meminfo"};
-
-
-enum CPUStates {
-  kUser_ = 0,
-  kNice_,
-  kSystem_,
-  kIdle_,
-  kIOwait_,
-  kIRQ_,
-  kSoftIRQ_,
-  kSteal_,
-  kGuest_,
-  kGuestNice_
-};
 class SystemStatistics
 {
 public:
@@ -47,16 +30,25 @@ private:
     void getAverageCPULoad();
     int getNumberOfCores();
     int getCoreTemperature(int core);
-    double MemoryUtilization(); 
-    double Utilization();
+    double computeMemoryUtilization(); 
+    double computeCpuUtilization();
     long ActiveJiffies();
     long IdleJiffies();  
-    std::vector<std::string> CpuUtilization();
+    std::vector<std::string> getCpuData();
+
+    void updateAverageLoadStatus();
+    void updateTemperatureStatus(int core ,double temperature);
+    void updateCpuStatus();
+    void updateMemoryStatus();
 
     float m_averageLoad[3] ={0.0,0.0,0.0};
+    double m_cpuPercentage,m_memoryPercentage;
+    double m_cpuThreshold,m_memoryThreshold,m_temperatureThreshold,m_averageLoadThreshold;
     //float m_averageLoad_1_min,m_averageLoad_5_min,m_averageLoad_15_min;
-
+    std::vector<std::string> m_cpuData; 
     std::mutex m_mutex;
+    Monitor *m_monitor; ///< An object to monitor class
+
 
 
 };

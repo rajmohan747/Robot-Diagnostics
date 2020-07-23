@@ -7,11 +7,13 @@
 SystemStatistics::SystemStatistics()
 {
    ROS_INFO("Statistics constructor called");
-   //nh.getParam("/nodes", m_initialNodeList);
-
+   nh.getParam("/cpu_threshold", m_cpuThreshold);
+   nh.getParam("/memory_threshold", m_memoryThreshold);
+   nh.getParam("/temperature_threshold", m_temperatureThreshold);
+   nh.getParam("/average_cpu_load_threshold", m_averageLoadThreshold);
    /*Gets all the nodes registered in the ROS master and stores it in a vector m_nodeListOriginal*/
    //ros::master::getNodes(m_nodeListOriginal);
-
+  m_monitor = new Monitor(nh, "System Statistic Monitor", true);
    //ROS_ERROR("Initial list size : %d",m_initialNodeList.size());
 }
 
@@ -31,24 +33,44 @@ SystemStatistics::~SystemStatistics()
 */
 void SystemStatistics::updateSystemStatistics()
 {
-    
-   // std::cout <<"Memory utilization in % " << MemoryUtilization() << std::endl;
-   // std::cout << "CPU utilization in % "   << Utilization() <<std::endl;
+    m_cpuPercentage    = computeCpuUtilization();
+    m_memoryPercentage = computeMemoryUtilization();
     int numberOfCores = getNumberOfCores();
+    double coreTemperature[numberOfCores] ={0.0};
+    //std::cout <<"Memory utilization in % " << m_memoryPercentage << std::endl;
+    //std::cout << "CPU utilization in % "   << m_cpuPercentage<<std::endl;
+    
   //  std::cout << "Number of cores : " <<numberOfCores << std::endl;
     for(int i =0; i<numberOfCores;i++)
     {
-      int coreTemperature = getCoreTemperature(i);
-     // std::cout << "Core temperature of "<< i << " th core is  "<< coreTemperature << std::endl;
+      coreTemperature[i] = getCoreTemperature(i);
+      if(coreTemperature[i] > m_temperatureThreshold)
+      {
+        updateTemperatureStatus(i,coreTemperature[i]);
+      }
+      //std::cout << "Core temperature of "<< i << " th core is  "<< coreTemperature << std::endl;
     }
-  //  std::cout <<"\n";
     getAverageCPULoad();
+
+    if(m_cpuPercentage > m_cpuThreshold)
+    {
+      updateCpuStatus();
+    }
+
+    if(m_memoryPercentage > m_memoryThreshold)
+    {
+      updateMemoryStatus();
+    }
+    if((m_averageLoad[0] > m_averageLoadThreshold) || (m_averageLoad[1] > m_averageLoadThreshold) || (m_averageLoad[2] > m_averageLoadThreshold) )
+    {
+      updateAverageLoadStatus();
+    }
 
 }
 
 
 
-double SystemStatistics::MemoryUtilization() 
+double SystemStatistics::computeMemoryUtilization() 
 {
   std::string line, key;
   long int value, MemTotal, MemFree,Buffers;
@@ -87,8 +109,30 @@ double SystemStatistics::MemoryUtilization()
 
 
 
+double SystemStatistics::computeCpuUtilization()
+{   
+  m_cpuData = getCpuData();
+  double m_Idle,m_NonIdle,m_PrevTotal,m_Total,m_Totald,m_Idled,m_CpuPercentage,m_PrevIdle,m_PrevNonIdle;
+  m_Idle        = (double)IdleJiffies();
+  m_NonIdle     = (double)ActiveJiffies();
+  m_PrevTotal   = m_PrevIdle + m_PrevNonIdle;
+  m_Total       = m_Idle + m_NonIdle;
+
+  m_Totald      =  m_Total - m_PrevTotal;
+  m_Idled       = m_Idle - m_PrevIdle;
+  m_CpuPercentage = (m_Totald - m_Idled)/m_Totald; 
+  
+  m_PrevIdle    = m_Idle;
+  m_PrevNonIdle = m_NonIdle;
+  
+  return m_CpuPercentage*100.0;
+
+}
+
+
+
 // TODO: Read and return CPU utilization
-std::vector<std::string> SystemStatistics::CpuUtilization() 
+std::vector<std::string> SystemStatistics::getCpuData() 
 {
   std::string line;
   std::string value;
@@ -119,35 +163,13 @@ std::vector<std::string> SystemStatistics::CpuUtilization()
 // TODO: Read and return the number of active jiffies for the system
 long SystemStatistics::ActiveJiffies() 
 { 
-  std::vector<std::string> cpuData = CpuUtilization();
-  return (std::stol(cpuData[CPUStates::kUser_])) + (std::stol(cpuData[CPUStates::kNice_])) + (std::stol(cpuData[CPUStates::kSystem_])) + (std::stol(cpuData[CPUStates::kIRQ_])) + (std::stol(cpuData[CPUStates::kSoftIRQ_])) + (std::stol(cpuData[CPUStates::kSteal_]));
+  return (std::stol(m_cpuData[CPUStates::kUser_])) + (std::stol(m_cpuData[CPUStates::kNice_])) + (std::stol(m_cpuData[CPUStates::kSystem_])) + (std::stol(m_cpuData[CPUStates::kIRQ_])) + (std::stol(m_cpuData[CPUStates::kSoftIRQ_])) + (std::stol(m_cpuData[CPUStates::kSteal_]));
 }
 
 // TODO: Read and return the number of idle jiffies for the system
 long SystemStatistics::IdleJiffies() 
 { 
-  std::vector<std::string> cpuData = CpuUtilization();
-  return (std::stol(cpuData[CPUStates::kIdle_]) + (stol(cpuData[CPUStates::kIOwait_])));
-}
-
-double SystemStatistics::Utilization()
-{   
-
-  double m_Idle,m_NonIdle,m_PrevTotal,m_Total,m_Totald,m_Idled,m_CpuPercentage,m_PrevIdle,m_PrevNonIdle;
-  m_Idle        = (double)IdleJiffies();
-  m_NonIdle     = (double)ActiveJiffies();
-  m_PrevTotal   = m_PrevIdle + m_PrevNonIdle;
-  m_Total       = m_Idle + m_NonIdle;
-
-  m_Totald      =  m_Total - m_PrevTotal;
-  m_Idled       = m_Idle - m_PrevIdle;
-  m_CpuPercentage = (m_Totald - m_Idled)/m_Totald; 
-  
-  m_PrevIdle    = m_Idle;
-  m_PrevNonIdle = m_NonIdle;
-  
-  return m_CpuPercentage*100.0;
-
+  return (std::stol(m_cpuData[CPUStates::kIdle_]) + (stol(m_cpuData[CPUStates::kIOwait_])));
 }
 
 /**
@@ -242,15 +264,11 @@ int SystemStatistics::getCoreTemperature(int core)
 
 void SystemStatistics::getAverageCPULoad()
 {
-    // Convert string to const char * as system requires 
-  // parameter of type const char * - for system()
   std::string data;
   int max_buffer = 256;
   char buffer[max_buffer]; 
   std::string str = "uptime";
-  //const char *command = str.c_str(); 
-  //system(command); 
-  
+
 
   /*The system command is often run first, before any output commands and the function 
   returns an integer indicating success or failure, but not the output of the string*/
@@ -282,10 +300,44 @@ void SystemStatistics::getAverageCPULoad()
         std::replace(subString.begin(),subString.end(),',',' ');
         std::istringstream linestream(subString);
         linestream >> str1 >> str2 >> m_averageLoad[0] >> m_averageLoad[1] >> m_averageLoad[2];
-        std::cout << "Read data  " << m_averageLoad[0] << "  "<<m_averageLoad[1]<< "  "<<m_averageLoad[2] << std::endl;
+        //std::cout << "Read data  " << m_averageLoad[0] << "  "<<m_averageLoad[1]<< "  "<<m_averageLoad[2] << std::endl;
     }
     
     pclose(stream);
 
    }
+}
+
+
+
+void SystemStatistics::updateMemoryStatus()
+{
+   std::string key = "/totalMemoryUsage";
+   std::string value = std::to_string(m_memoryPercentage);
+   double error_level = 0.6; 
+   m_monitor->addValue(key, value, "%", error_level, AggregationStrategies::FIRST);
+}
+
+void SystemStatistics::updateCpuStatus()
+{
+   std::string key = "/totalCpuUsage";
+   std::string value = std::to_string(m_cpuPercentage);
+   double error_level = 0.6; 
+   m_monitor->addValue(key, value, "%", error_level, AggregationStrategies::FIRST);
+}
+
+void SystemStatistics::updateTemperatureStatus(int core ,double temperature)
+{
+   std::string key = "/systemTemperature";
+   std::string value ="Temperature of core-"+ std::to_string(core) + " : "+ std::to_string(temperature);
+   double error_level = 0.3; 
+   m_monitor->addValue(key, value, "", error_level, AggregationStrategies::FIRST);
+}
+
+void SystemStatistics::updateAverageLoadStatus()
+{
+   std::string key = "/averageLoad";
+   std::string value = "Average load in last 1 min: "+ std::to_string(m_averageLoad[0]) + " last 10 min : "+ std::to_string(m_averageLoad[1]) + " last 15 min : " + std::to_string(m_averageLoad[2]);
+   double error_level = 0.3; 
+   m_monitor->addValue(key, value, "", error_level, AggregationStrategies::FIRST);
 }

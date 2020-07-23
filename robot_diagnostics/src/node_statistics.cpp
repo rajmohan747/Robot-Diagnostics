@@ -4,8 +4,9 @@
 /**
 * @brief  Constructor for the Statistics
 */
-NodeStatistics::NodeStatistics()
+NodeStatistics::NodeStatistics():nh("~") 
 {
+  
    ROS_INFO("Statistics constructor called");
    nh.getParam("/nodes", m_initialNodeList);
 
@@ -189,7 +190,6 @@ void NodeStatistics::updateNodeStatus(std::string &node_name)
    double error_level = 0.0; 
    getErrorValueFromState(key,value,error_level);
    m_monitor->addValue(key, value, "", error_level, AggregationStrategies::FIRST);
-
 }
 
 

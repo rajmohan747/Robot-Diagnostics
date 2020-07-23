@@ -22,11 +22,12 @@
   <depend>roscpp</depend>
   <depend>rospy</depend>
   <depend>roslib</depend>
-  <depend>monitoring_core</depend>
-
-  <depend>geometry_msgs</depend>
-
-  <depend>std_msgs</depend>
+  <depend>monitoring_core</depend>  
+  <depend>robot_activity</depend> 
+  <depend>geometry_msgs</depend>  
+  <depend>ros_type_introspection</depend>
+  <depend>topic_tools</depend>
+  <depend>std_msgs</depend>  
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
