@@ -1,9 +1,8 @@
-frequency: 1.0
-filter_type: 1
-nodes: ["/node_monitors","/rosouts","/system_monitors"]
-cpu_threshold: 3.0
-memory_threshold: 3.0
-error_threshold: 2.0
-publish_ping_rate: false
-number_of_restart: 10
+nodeFilterType: 1
+nodes: ["/node_monitors","/rosout","/system_monitors","/amcl","/robot_pose_publisher"]
+maxPermissibleCpuUsage: 3.0
+maxPermissibleMemoryUsage: 3.0
+timerUpdateFrequency : 1.0
+maxPermissibleNodeRestart : 5
+
 restart_path: "/home/addverb/ADDVERB/Session/VSCODE/Demo/catkin_ws/node_stat"

@@ -12,7 +12,7 @@ TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,doubl
 {
     m_topic                 = topicName;
     m_expectedFrequency     = topicFrequency;
-    nh.getParam("minAcceptableFrequencyFactor", m_minAcceptableFrequencyFactor);
+    nh.getParam("/minAcceptableFrequencyFactor", m_minAcceptableFrequencyFactor);
     ROS_WARN("Frequency statsistics constructor initialized with for %s with expected frequency of  %f Hz",m_topic.c_str(),topicFrequency);
     /*Subscribers*/
     universalSub = nh.subscribe(m_topic, 1, &TopicStatistics::genericMessageCallback, this);

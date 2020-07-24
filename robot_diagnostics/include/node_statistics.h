@@ -1,70 +1,72 @@
 #ifndef NODE_STATISTICS_H
 #define NODE_STATISTICS_H
-
-#include <iostream>
 #include <ros/ros.h>
-#include <fstream>
-#include <vector>
-#include <fstream>
-#include <unistd.h>
-#include "XmlRpc.h"
-#include "unordered_map"
-#include <memory>
-#include <mutex>
-#include "monitoring_core/monitor.h"
+#include <iostream>
 #include "utils.h"
-
+#include <fstream>
+#include <mutex>
+#include <memory>
+#include "unordered_map"
+#include "monitoring_core/monitor.h"
+  /**
+   * @class TrajectoryController
+   * @brief A controller that follows the trajectory provided by a planner.
+   */
 
 
 
 class NodeStatistics
 {
-public:
+    public:
+        /**
+        * @brief  Constructor for the TrajectoryController
+        */
+        NodeStatistics(ros::NodeHandle &nh,std::string topicName);
 
-    /* Constructor for the Ros class */ 
-    NodeStatistics();
+        /**
+        * @brief  Destructor for the TrajectoryController
+        */
+        ~NodeStatistics();
+    
+    private:
+        /*Member functions*/
+        void timerCallback(const ros::TimerEvent &e);
+        void monitorNodeStatistics();
+        
+        void updateNodePingStatus(std::string &node_name);
+        
+        void publishNodeStatistics();
+        void publishNodeCpuUsage(std::string &node_name);
+        void publishNodeMemoryUsage(std::string &node_name);
+        void publishNodeUnavailableInfo();
 
-     /* Destructor for the Ros class */
-    ~NodeStatistics();
+        std::string getPid(std::string nodeName);
+        std::string getNodeXmlrpcURI(std::string &node_name);
+        double computeNodeCPUPercentage(std::string pid);
+        double computeNodeMemoryPercentage(std::string pid);
+        long ActiveJiffies(std::string pid);
+        long UpTime(std::string pid);
+        long UpTime(); 
+        long getRamSize();
 
-    void updateNodeStatistics();
-private:
-    ros::NodeHandle nh;
+        bool isNodeAvailable(std::string &node_name); 
+        /*Member variables*/
+        ros::Timer nodeStatusTimer; 
+        std::string m_nodeName,m_lastPid;
 
-    /*Member Functions*/
-    long getRamSize();
-    long UpTime();
-    long UpTime(std::string pid);
-    long ActiveJiffies(std::string pid);
-    double computeNodeCPUPercentage(std::string pid); 
-    double computeNodeMemoryPercentage(std::string pid);
+        int m_maxPermissibleNodeRestart;
+        int m_nodeRestartCount = 0;
+        double m_memPercentage =0.0;
+        double m_cpuPercentage = 0.0;
+        double m_maxPermissibleCPUUsage,m_maxPermissibleMemoryUsage;
+        long m_ramSize,m_upTime;
+        char m_nodeState;
 
-    std::string getPid(std::string nodeName);
-    std::string getNodeXmlrpcURI(std::string &node_name);
-    std::string ElapsedTime(long elapsedSeconds); 
-    bool isValidNode(std::string &nodeName);;
-
-    void updateCpuStatus(std::string &node_name);
-    void updateMemoryStatus(std::string &node_name);
-    void updateTimeStatus(std::string &node_name);
-    void updateNodeStatus(std::string &node_name);
-    void updateNodePingStatus(std::string &node_name);
-
-    void getErrorValueFromState(std::string &node_name,std::string &value, double &error_level);
-
-    bool m_setup = false;
-    double m_memPercentage,m_cpuPercentage;
-    long m_upTime,m_ramSize;
-
-    std::vector<std::string> m_initialNodeList;
-    std::vector<std::string> m_nodeListOriginal,m_nodeListCopy;
-    std::unordered_map<std::string, std::string> m_nodeLog; 
-    std::mutex m_mutex;
-    char m_nodeState;
-
-    //std::unique_ptr<Monitor> m_monitor;
-    Monitor *m_monitor; ///< An object to monitor class
+        bool m_nodeSetup = false;
+        bool m_isAvailable= false;
+        std::unordered_map<std::string, std::string> m_nodeLog; 
+        std::mutex m_mutex;
+        std::shared_ptr<Monitor> m_monitor;
+        //Monitor *m_monitor; ///< An object to monitor class
 };
-
-
 #endif

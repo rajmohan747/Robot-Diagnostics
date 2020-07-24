@@ -24,7 +24,7 @@ enum CPUStates {
 };
 
 
-enum FilterType
+enum NodeFilter
 {
     DEFAULT,
     ADD,

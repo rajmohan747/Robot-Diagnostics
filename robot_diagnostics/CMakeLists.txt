@@ -13,8 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   monitoring_core
   roslib
   robot_activity
-  ros_type_introspection
-  topic_tools
 )
 
 
@@ -30,8 +28,6 @@ catkin_package(
     std_msgs
     monitoring_core
     robot_activity
-    ros_type_introspection
-    topic_tools
 )
 ###########
 ## Build ##
@@ -47,6 +43,7 @@ include_directories(
 add_executable(node_monitoring
   src/node_monitor.cpp
   src/node_statistics.cpp
+
 )
 
 target_link_libraries(node_monitoring

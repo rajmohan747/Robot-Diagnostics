@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <ros/ros.h>
-#include "utils.h"
+
 
 #include "topic_statistics.h"
 #include "xmlrpcpp/XmlRpcValue.h"
@@ -29,7 +29,7 @@ private:
     void getAllTopics();
     bool isValidTopic(std::string &topic);
 
-    std::vector<std::string> m_validTopicList,m_topicListOriginal,m_topicListCopy;
+    std::vector<std::string> m_topicListOriginal;
     std::vector<shared_ptr<TopicStatistics> > monitor_list_;
     std::unordered_map<std::string ,double> m_validTopicMap;
     XmlRpc::XmlRpcValue m_topicList;

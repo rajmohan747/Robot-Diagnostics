@@ -25,8 +25,7 @@
   <depend>monitoring_core</depend>  
   <depend>robot_activity</depend> 
   <depend>geometry_msgs</depend>  
-  <depend>ros_type_introspection</depend>
-  <depend>topic_tools</depend>
+
   <depend>std_msgs</depend>  
   <!-- The export tag contains other, unspecified, tags -->
   <export>
