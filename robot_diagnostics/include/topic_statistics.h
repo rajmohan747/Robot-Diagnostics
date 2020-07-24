@@ -7,6 +7,8 @@
 #include <vector>
 #include <bits/stdc++.h> 
 #include <mutex>
+#include <memory>
+#include "monitoring_core/monitor.h"
 using namespace std;
   /**
    * @class TrajectoryController
@@ -32,7 +34,7 @@ public:
 
 
 
-    TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency);
+    TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency,std::shared_ptr<Monitor> monitor);
 
         /**
         * @brief  Destructor for the TrajectoryController
@@ -73,5 +75,7 @@ private:
     std::vector<double> m_timeDifferences;
     std::string m_topic;
     std::mutex m_mutex;
+
+    std::shared_ptr<Monitor> m_monitor;
 };
 #endif

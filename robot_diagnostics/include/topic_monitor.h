@@ -34,6 +34,8 @@ private:
     std::unordered_map<std::string ,double> m_validTopicMap;
     XmlRpc::XmlRpcValue m_topicList;
 
+
+    std::shared_ptr<Monitor> m_topicMonitor;
     // std::vector<FrequencyStatistics *> monitor_list_;
 
 };

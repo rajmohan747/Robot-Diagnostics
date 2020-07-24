@@ -5,19 +5,19 @@
 /**
 * @brief  Constructor for the Statistics
 */
-TopicMonitor::TopicMonitor()
+TopicMonitor::TopicMonitor():nh("~") 
 {
   ROS_INFO("TopicStatistics constructor called");
 
   getAllTopics();
   validTopicList(m_validTopicMap);
 
-  
+  m_topicMonitor =std::make_shared<Monitor>(nh, "Topic Monitor", true);
   for (auto& x: m_validTopicMap) 
   {
     std::cout << x.first << "  : " << x.second << std::endl;
-    std::shared_ptr<TopicStatistics>monitor(new TopicStatistics(nh,x.first,x.second));
-    monitor_list_.push_back(monitor);
+    std::shared_ptr<TopicStatistics>topicStatistics(new TopicStatistics(nh,x.first,x.second,m_topicMonitor));
+    monitor_list_.push_back(topicStatistics);
   }
 
 }

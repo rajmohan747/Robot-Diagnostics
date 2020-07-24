@@ -4,10 +4,10 @@
     * @brief  Constructor for the TrajectoryController
     */
 
-NodeStatistics::NodeStatistics(ros::NodeHandle &nh,std::string topicName)
+NodeStatistics::NodeStatistics(ros::NodeHandle &nh,std::string topicName,std::shared_ptr<Monitor> monitor)
 {
     m_nodeName    = topicName;
-    
+    m_monitor     = monitor;
     double timerUpdateFrequency = 1.0;
     nh.getParam("/timerUpdateFrequency", timerUpdateFrequency);
     nh.getParam("/maxPermissibleNodeRestart", m_maxPermissibleNodeRestart);
@@ -16,11 +16,12 @@ NodeStatistics::NodeStatistics(ros::NodeHandle &nh,std::string topicName)
     m_ramSize     = getRamSize();
 
    /*Timer*/
+
     nodeStatusTimer = nh.createTimer(ros::Duration(1.0 / timerUpdateFrequency), &NodeStatistics::timerCallback, this);
     ROS_WARN("NodeStatistics constructor initialized for node : %s with max restart : %d",m_nodeName.c_str(),m_maxPermissibleNodeRestart);   
     //m_monitor = new Monitor(nh, "Topic Hz Monitor", timerUpdateFrequency);
     //std::shared_ptr<Monitor> m_monitor(new Monitor(nh, "Topic Hz Monitor", timerUpdateFrequency));
-    m_monitor  = std::make_shared<Monitor>(nh, "Topic Hz Monitor", timerUpdateFrequency);
+   // m_monitor  = std::make_shared<Monitor>(nh, "Topic Hz Monitor", timerUpdateFrequency);
 }
 
 /**
@@ -38,12 +39,12 @@ void NodeStatistics::timerCallback(const ros::TimerEvent &e)
     m_isAvailable = isNodeAvailable(m_nodeName);
     if((m_nodeRestartCount < m_maxPermissibleNodeRestart) && m_isAvailable)
     {
-        monitorNodeStatistics();
+      monitorNodeStatistics();
     }
     else
     {
       ROS_ERROR("Node %s has got restarted %d times",m_nodeName.c_str(),m_nodeRestartCount );
-       publishNodeUnavailableInfo();
+      publishNodeUnavailableInfo();
     }
     
     
@@ -67,7 +68,7 @@ void NodeStatistics::monitorNodeStatistics()
     else if (m_nodeLog.find(currentPid) == m_nodeLog.end())
     {
         m_nodeRestartCount++;
-        ROS_WARN("Node : %s is killed with last pid %s for %d  th  time",m_nodeName.c_str(),m_lastPid.c_str(),m_nodeRestartCount);
+        ROS_ERROR("Node : %s is killed with last pid %s for %d  th  time",m_nodeName.c_str(),m_lastPid.c_str(),m_nodeRestartCount);
         m_nodeLog.clear();
         m_nodeLog[currentPid] = m_nodeName;
         
@@ -343,6 +344,68 @@ std::string NodeStatistics::getNodeXmlrpcURI(std::string &node_name)
 }
 
 
+
+
+
+/**
+* @brief Computes status of node whether it's alive,dead,sleeping etc
+*/
+void NodeStatistics::getErrorValueFromState(std::string &value, double &error_level)
+{
+    /* Providing the desciption of the state based on state context */
+    switch (m_nodeState)
+    {
+    case 'R':
+        value = m_nodeName + " is running";
+        error_level = 0.0;
+        break;
+    case 'S':
+        value = m_nodeName + " is sleeping in an interruptible wait";
+        error_level = 0.1;
+        break;
+    case 'D':
+        value = m_nodeName + " is waiting in uninterruptible disk sleep";
+        error_level = 0.1;
+        break;
+    case 'T':
+        value = m_nodeName + " is stopped (on a signal) or trace stopped";
+        error_level = 0.1;
+        break;
+    case 't':
+        value = m_nodeName + " is trace stopped";
+        error_level = 0.1;
+        break;
+    case 'Z':
+        value = m_nodeName + " is a zombie";
+        error_level = 0.3;
+        break;
+    case 'W':
+        value = m_nodeName + " is paging";
+        error_level = 0.1;
+        break;
+    case 'X':
+        value = m_nodeName + " is Dead";
+        error_level = 0.3;
+        break;
+    case 'x':
+        value = m_nodeName + " is Dead";
+        error_level = 0.3;
+        break;
+    case 'K':
+        value = m_nodeName + " is wakekill";
+        error_level = 0.3;
+        break;
+    case 'P':
+        value = m_nodeName + " is parked";
+        error_level = 0.1;
+        break;
+    default:
+        value = m_nodeName + " is a zombie";
+        error_level = 0.3;
+    }
+} 
+
+
 void NodeStatistics::publishNodeStatistics()
 {
   if(m_cpuPercentage > m_maxPermissibleCPUUsage)
@@ -353,6 +416,7 @@ void NodeStatistics::publishNodeStatistics()
   {
     publishNodeMemoryUsage(m_nodeName);
   }
+  publishNodeStatus();
 }
 
 
@@ -377,6 +441,16 @@ void NodeStatistics::publishNodeMemoryUsage(std::string &node_name)
     m_monitor->addValue(key, m_memPercentage, "%", 0.3, AggregationStrategies::FIRST);
 }
 
+
+void NodeStatistics::publishNodeStatus()
+{
+  std::string value;
+  double error_level;
+  getErrorValueFromState(value,error_level);
+
+
+ m_monitor->addValue(m_nodeName,value , "", error_level, AggregationStrategies::FIRST);
+}
 
 
 /**

@@ -21,7 +21,7 @@ class NodeStatistics
         /**
         * @brief  Constructor for the TrajectoryController
         */
-        NodeStatistics(ros::NodeHandle &nh,std::string topicName);
+        NodeStatistics(ros::NodeHandle &nh,std::string topicName,std::shared_ptr<Monitor> m_monitor);
 
         /**
         * @brief  Destructor for the TrajectoryController
@@ -33,12 +33,15 @@ class NodeStatistics
         void timerCallback(const ros::TimerEvent &e);
         void monitorNodeStatistics();
         
+    
         void updateNodePingStatus(std::string &node_name);
         
         void publishNodeStatistics();
         void publishNodeCpuUsage(std::string &node_name);
         void publishNodeMemoryUsage(std::string &node_name);
         void publishNodeUnavailableInfo();
+        void publishNodeStatus();
+        void getErrorValueFromState(std::string &value, double &error_level);
 
         std::string getPid(std::string nodeName);
         std::string getNodeXmlrpcURI(std::string &node_name);

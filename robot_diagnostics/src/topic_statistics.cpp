@@ -8,10 +8,11 @@ std::string GenericSubsriber::md5 = "*";
 
 std::string GenericSubsriber::data_type = "/";
 
-TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency)
+TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency,std::shared_ptr<Monitor> monitor)
 {
     m_topic                 = topicName;
     m_expectedFrequency     = topicFrequency;
+    m_monitor               = monitor;
     nh.getParam("/minAcceptableFrequencyFactor", m_minAcceptableFrequencyFactor);
     ROS_WARN("Frequency statsistics constructor initialized with for %s with expected frequency of  %f Hz",m_topic.c_str(),topicFrequency);
     /*Subscribers*/
@@ -46,12 +47,16 @@ void TopicStatistics::timerCallback(const ros::TimerEvent &e)
         if(m_currentSize == m_lastSize)
         {
             ROS_WARN("No data received current : %d last :%d",m_currentSize,m_lastSize);
+            std:: string value =" not available";
+            m_monitor->addValue(m_topic, value, "", 0.6, AggregationStrategies::FIRST);
         }
             
         
         if(m_averageFrequency < m_minAcceptableFrequencyFactor*m_expectedFrequency)
         {
             ROS_ERROR("Message updation of %s is slow with : %f",m_topic.c_str(),m_averageFrequency);
+            std:: string value =" delay in  publishing dataa";
+            m_monitor->addValue(m_topic, value, "", 0.3, AggregationStrategies::FIRST);
         }
         m_lastSize = m_currentSize;
         m_endTime  = m_startTime;
