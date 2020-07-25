@@ -1,4 +1,4 @@
-cpu_threshold: 3.0
-memory_threshold: 3.0
-temperature_threshold: 2.0
-average_cpu_load_threshold: 2.0
+maxPermissibleCpuUsage: 3.0
+maxPermissibleMemoryUsage: 3.0
+maxPermissibleTemperature: 40000.0
+maxPermissibleAverageCpuUsage: 2.0

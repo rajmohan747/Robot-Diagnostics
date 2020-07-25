@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include "unordered_map"
 #include <mutex>
+#include <memory>
 #include "monitoring_core/monitor.h"
 #include "utils.h"
 
@@ -22,33 +23,44 @@ public:
      /* Destructor for the Ros class */
     ~SystemStatistics();
 
-    void updateSystemStatistics();
+    void computeAndUpdateSystemStatistics();
+
 private:
     ros::NodeHandle nh;
 
     /*Member Functions*/
-    void getAverageCPULoad();
+
+    void computeSystemStatistics();
+    void publishSystemStatistics();
+    void publishAverageLoadStatistics();
+    void publishTemperatureStatistics(int core ,double temperature);
+    void publishCpuStatistics();
+    void publishMemoryStatistics();
+    void computeAverageCPULoad();
+
     int getNumberOfCores();
     int getCoreTemperature(int core);
+    
     double computeMemoryUtilization(); 
     double computeCpuUtilization();
+    
     long ActiveJiffies();
     long IdleJiffies();  
+    
     std::vector<std::string> getCpuData();
-
-    void updateAverageLoadStatus();
-    void updateTemperatureStatus(int core ,double temperature);
-    void updateCpuStatus();
-    void updateMemoryStatus();
-
-    float m_averageLoad[3] ={0.0,0.0,0.0};
+   
+    /*Member variables*/
+    int m_numberOfCores;
+    
+    double m_coreTemperature[10] ={0.0};
+    double m_averageLoad[3] ={0.0,0.0,0.0};
     double m_cpuPercentage,m_memoryPercentage;
     double m_cpuThreshold,m_memoryThreshold,m_temperatureThreshold,m_averageLoadThreshold;
-    //float m_averageLoad_1_min,m_averageLoad_5_min,m_averageLoad_15_min;
+    
     std::vector<std::string> m_cpuData; 
     std::mutex m_mutex;
-    Monitor *m_monitor; ///< An object to monitor class
-
+    //Monitor *m_monitor; ///< An object to monitor class
+    std::shared_ptr<Monitor> m_monitor;
 
 
 };

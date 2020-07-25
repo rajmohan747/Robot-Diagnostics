@@ -17,7 +17,7 @@ public:
 private:
     /*ROS Node Handler*/
      std::unique_ptr <SystemStatistics> m_statistics;
-    //Statistics* m_statistics;
+    
 
 };
 

@@ -23,7 +23,7 @@ SystemMonitor::~SystemMonitor()
 */
 void SystemMonitor::systemMonitoring()
 {
-    m_statistics->updateSystemStatistics();
+    m_statistics->computeAndUpdateSystemStatistics();
 }
 
 
@@ -35,7 +35,6 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "system_monitoring");
     std::unique_ptr<SystemStatistics> statisticsPtr(new SystemStatistics);
     SystemMonitor system_monitor(std::move(statisticsPtr));
-    //NodeMonitor node_monitor(new Statistics());
     ros::Rate rate(1);
 
     //boost::thread* controller_thread = new boost::thread(boost::bind(&NavigationWrapper::controlFlow, &controller));
