@@ -4,10 +4,9 @@
     * @brief  Constructor for the TrajectoryController
     */
 
-NodeStatistics::NodeStatistics(ros::NodeHandle &nh,std::string topicName,std::shared_ptr<Monitor> monitor)
+NodeStatistics::NodeStatistics(ros::NodeHandle &nh,std::string topicName,std::shared_ptr<Monitor> monitor):m_nodeName(topicName),m_monitor(monitor)
 {
-    m_nodeName    = topicName;
-    m_monitor     = monitor;
+
     double timerUpdateFrequency = 1.0;
     nh.getParam("/timerUpdateFrequency", timerUpdateFrequency);
     nh.getParam("/maxPermissibleNodeRestart", m_maxPermissibleNodeRestart);
@@ -19,9 +18,7 @@ NodeStatistics::NodeStatistics(ros::NodeHandle &nh,std::string topicName,std::sh
 
     nodeStatusTimer = nh.createTimer(ros::Duration(1.0 / timerUpdateFrequency), &NodeStatistics::timerCallback, this);
     ROS_WARN("NodeStatistics constructor initialized for node : %s with max restart : %d",m_nodeName.c_str(),m_maxPermissibleNodeRestart);   
-    //m_monitor = new Monitor(nh, "Topic Hz Monitor", timerUpdateFrequency);
-    //std::shared_ptr<Monitor> m_monitor(new Monitor(nh, "Topic Hz Monitor", timerUpdateFrequency));
-   // m_monitor  = std::make_shared<Monitor>(nh, "Topic Hz Monitor", timerUpdateFrequency);
+    
 }
 
 /**
@@ -36,18 +33,20 @@ NodeStatistics::~NodeStatistics()
 void NodeStatistics::timerCallback(const ros::TimerEvent &e)
 {
 
-    m_isAvailable = isNodeAvailable(m_nodeName);
+    m_isAvailable = isNodeAvailable();
     if((m_nodeRestartCount < m_maxPermissibleNodeRestart) && m_isAvailable)
     {
       monitorNodeStatistics();
+      if(m_nodeRestart)
+      {
+        publishNodeUnavailableInfo(0.3);
+      }
     }
     else
     {
-      ROS_ERROR("Node %s has got restarted %d times",m_nodeName.c_str(),m_nodeRestartCount );
-      publishNodeUnavailableInfo();
+      ROS_ERROR_ONCE("Node %s has got restarted %d times",m_nodeName.c_str(),m_nodeRestartCount );
+      publishNodeUnavailableInfo(0.9);
     }
-    
-    
 
 }
 
@@ -58,7 +57,7 @@ void NodeStatistics::timerCallback(const ros::TimerEvent &e)
 void NodeStatistics::monitorNodeStatistics()
 {
 
-    std::string currentPid = getPid(m_nodeName);
+    std::string currentPid = getPid();
 
     if(m_nodeSetup == false)
     {
@@ -71,8 +70,7 @@ void NodeStatistics::monitorNodeStatistics()
         ROS_ERROR("Node : %s is killed with last pid %s for %d  th  time",m_nodeName.c_str(),m_lastPid.c_str(),m_nodeRestartCount);
         m_nodeLog.clear();
         m_nodeLog[currentPid] = m_nodeName;
-        
-        
+        m_nodeRestart = true;    
     }   
     else
     {
@@ -81,8 +79,7 @@ void NodeStatistics::monitorNodeStatistics()
         {
             m_memPercentage     = computeNodeMemoryPercentage(currentPid)*100/(m_ramSize/1024); 
             m_cpuPercentage     = computeNodeCPUPercentage(currentPid);
-            //ROS_INFO("Node : %s  with  PID  %s mem % : %f  cpu % : %f ",m_nodeName.c_str(),currentPid.c_str(),m_memPercentage,m_cpuPercentage);
-            updateNodePingStatus(m_nodeName);
+            //updateNodePingStatus();
             publishNodeStatistics();
         }
         
@@ -95,13 +92,13 @@ void NodeStatistics::monitorNodeStatistics()
 * @brief Computes the PID for a particular node
 * @returns the PID as a string
 */
-std::string NodeStatistics::getPid(std::string nodeName)
+std::string NodeStatistics::getPid()
 {
 
   std::string data;
   int max_buffer = 256;
   char buffer[max_buffer]; 
-  std::string str = "rosnode info " + nodeName +" 2>/dev/null | grep Pid| cut -d' ' -f2";
+  std::string str = "rosnode info " + m_nodeName +" 2>/dev/null | grep Pid| cut -d' ' -f2";
 
   /*The system command is often run first, before any output commands and the function 
   returns an integer indicating success or failure, but not the output of the string*/
@@ -266,11 +263,9 @@ long NodeStatistics::UpTime()
 /**
 * @brief Checks whether a node is alive or not by pinging it
 */
-void NodeStatistics::updateNodePingStatus(std::string &node_name)
+void NodeStatistics::updateNodePingStatus()
 {
-  std::string nodeXmlrpcURI = getNodeXmlrpcURI(node_name);
-
-  //std::cout << "retun "<< nodeXmlrpcURI <<std::endl;
+  std::string nodeXmlrpcURI = getNodeXmlrpcURI();
   std::string data;
   int max_buffer = 256;
   char buffer[max_buffer]; 
@@ -296,11 +291,9 @@ void NodeStatistics::updateNodePingStatus(std::string &node_name)
     std::string l1,l2,l3,l4,l5;
 
     linestream>>l1>>l2>>l3>>l4>>l5;
-   // std::string key = node_name+"/ping_rate";
     float value =std::stof(l5.substr(5,5));
     ROS_WARN("Node %s  ping rate  is %f",m_nodeName.c_str(),value);
-   // double error_level = 0.0; 
-   // m_monitor->addValue(key, value, "ms", error_level, AggregationStrategies::FIRST);
+   
    }	  
 }
 
@@ -310,12 +303,12 @@ void NodeStatistics::updateNodePingStatus(std::string &node_name)
 /**
 * @returns the nodexmlrpcURI corresponding to the node provided
 */
-std::string NodeStatistics::getNodeXmlrpcURI(std::string &node_name)
+std::string NodeStatistics::getNodeXmlrpcURI()
 {
   std::string data;
   int max_buffer = 256;
   char buffer[max_buffer]; 
-  std::string str = "rosnode list -a | grep " + node_name;
+  std::string str = "rosnode list -a | grep " + m_nodeName;
 /*Opens up a read-only stream, runs the command and captures the output,
    stuffs it into the buffer and returns it as a string.*/
   std::unique_lock<std::mutex> lock (m_mutex);
@@ -328,8 +321,7 @@ std::string NodeStatistics::getNodeXmlrpcURI(std::string &node_name)
         {
         	data.append(buffer);
           
-        }  
-       //std::cout << "data " << data <<std::endl; 
+        }   
     }
     
     pclose(stream);
@@ -337,7 +329,6 @@ std::string NodeStatistics::getNodeXmlrpcURI(std::string &node_name)
     std::istringstream linestream(data);
     std::string l1,l2;
     linestream>>l1>>l2;
-    //std::cout << "fun " << l1 << std::endl;
     /*To avoid the new line character by the end of data*/
     return l1;
    }	
@@ -410,34 +401,34 @@ void NodeStatistics::publishNodeStatistics()
 {
   if(m_cpuPercentage > m_maxPermissibleCPUUsage)
   {
-    publishNodeCpuUsage(m_nodeName);
+    publishNodeCpuUsage();
   }
   if(m_memPercentage > m_maxPermissibleMemoryUsage)
   {
-    publishNodeMemoryUsage(m_nodeName);
+    publishNodeMemoryUsage();
   }
   publishNodeStatus();
 }
 
 
-void NodeStatistics::publishNodeUnavailableInfo()
+void NodeStatistics::publishNodeUnavailableInfo(double error_level)
 {
-  std::string key = m_nodeName + " is unavailable/restarted beyond limit";
-  m_monitor->addValue(key, m_nodeRestartCount, "times", 0.9, AggregationStrategies::FIRST);
+  std::string key = m_nodeName + " is unavailable/restarted ";
+  m_monitor->addValue(key, m_nodeRestartCount, "times", error_level, AggregationStrategies::FIRST);
 }
 
-void NodeStatistics::publishNodeCpuUsage(std::string &node_name)
+void NodeStatistics::publishNodeCpuUsage()
 {
     std::unique_lock<std::mutex> lock (m_mutex);
-    std::string key = node_name + "/cpu_usage";
+    std::string key = m_nodeName + "/cpu_usage";
     m_monitor->addValue(key, m_cpuPercentage, "%", 0.3, AggregationStrategies::FIRST);
 }
 
 
-void NodeStatistics::publishNodeMemoryUsage(std::string &node_name)
+void NodeStatistics::publishNodeMemoryUsage()
 {
     std::unique_lock<std::mutex> lock (m_mutex);
-    std::string key = node_name + "/memory_usage";    
+    std::string key = m_nodeName + "/memory_usage";    
     m_monitor->addValue(key, m_memPercentage, "%", 0.3, AggregationStrategies::FIRST);
 }
 
@@ -462,7 +453,6 @@ long NodeStatistics::getRamSize()
   std::string line, key;
   long int value, MemTotal;
   std::ifstream inFile(kProcDirectory + kMeminfoFilename);
-//  std::unique_lock<std::mutex> lock (m_mutex);
   if (inFile.is_open()) {
     while (std::getline(inFile, line)) 
     {
@@ -485,13 +475,13 @@ long NodeStatistics::getRamSize()
 * @brief checks whehter the given node name is currently registered with ros master
 * @returns true if the node is available,else false;
 */
-bool NodeStatistics::isNodeAvailable(std::string &node_name)
+bool NodeStatistics::isNodeAvailable()
 {
   std::vector<std::string> currentNodeList;
   ros::master::getNodes(currentNodeList);
   for(auto node : currentNodeList)
   {
-    if(node == node_name)
+    if(node == m_nodeName)
     {
       return true;
     }

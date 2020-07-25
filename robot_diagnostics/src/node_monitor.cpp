@@ -2,12 +2,12 @@
 #include "node_monitor.h"
 
 /**
-* @brief  Constructor for the Statistics
+* @brief  Constructor for the NodeMonitor
 */
 NodeMonitor::NodeMonitor():nh("~") 
 {
   
-   ROS_INFO("Statistics constructor called");
+   ROS_INFO("NodeMonitor constructor called");
    nh.getParam("/nodes", m_initialNodeList);
    nh.getParam("/nodeFilterType", m_nodeFilterType);
 
@@ -20,32 +20,23 @@ NodeMonitor::NodeMonitor():nh("~")
 
 
    applyNodeFilter(m_nodeListFiltered);
-   double timerUpdateFrequency = 1.0;
-   //std::shared_ptr<Monitor>monitor (new Monitor(nh, "Topic Hz Monitor", timerUpdateFrequency));
-   //monitor_ = new Monitor(nh, "Topic Hz Monitor", timerUpdateFrequency);
-   
+   double timerUpdateFrequency = 1.0;   
    m_nodeMonitor =std::make_shared<Monitor>(nh, "Node Monitor", true);
    for(int i=0; i< m_nodeListFiltered.size();i++)
    {
-       std::cout << "Filtered nodes are " <<m_nodeListFiltered[i] << std::endl;
+       //std::cout << "Filtered nodes are " <<m_nodeListFiltered[i] << std::endl;
        std::shared_ptr<NodeStatistics>nodeStatistics(new NodeStatistics(nh,m_nodeListFiltered[i],m_nodeMonitor));
        m_nodeList.push_back(nodeStatistics);
    }
-
-
-
-
 }
 
 /**
-* @brief  Destructor for the Statistics
+* @brief  Destructor for the NodeMonitor
 */
 
 NodeMonitor::~NodeMonitor()
 {
-   // delete m_monitor;
 }
-
 
 
 
@@ -126,18 +117,9 @@ void NodeMonitor::applyNodeFilter(std::vector<std::string> &nodeListFiltered)
 */
 int main(int argc, char** argv)
 {
-   ros::init(argc, argv, "node_monitoring");
-   NodeMonitor topic_monitor;
-    //std::unique_ptr<TopicStatistics> statisticsPtr(new TopicStatistics);
-    //TopicMonitor topic_monitor(std::move(statisticsPtr));
-    ros::Rate rate(20);
-    ros::spin();
-
-    // while(ros::ok())
-    // {
-    //     //topic_monitor.topicMonitoring();
-    //     rate.sleep();
-    //     ros::spinOnce();
-    // }
-    return 0;
+  ros::init(argc, argv, "node_monitoring");
+  NodeMonitor node_monitor;
+  ros::Rate rate(20);
+  ros::spin();
+  return 0;
 }

@@ -1,17 +1,7 @@
 #ifndef NODE_MONITOR_H
 #define NODE_MONITOR_H
 
-#include <iostream>
-#include <ros/ros.h>
-#include <vector>
 
-#include <unistd.h>
-#include "XmlRpc.h"
-
-#include <memory>
-
-
-#include "utils.h"
 #include "node_statistics.h"
 
 
@@ -30,6 +20,7 @@ public:
 private:
 
     ros::NodeHandle nh;
+
     /*Member functions*/
 
     bool isValidNode(std::string &nodeName);;

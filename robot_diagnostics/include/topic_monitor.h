@@ -6,18 +6,16 @@
 
 
 #include "topic_statistics.h"
-#include "xmlrpcpp/XmlRpcValue.h"
-#include <unordered_map>
 
 
 class TopicMonitor
 {
 public:
 
-    /* Constructor for the Ros class */ 
+    /* Constructor for the TopicMonitor */ 
     TopicMonitor();
 
-     /* Destructor for the Ros class */
+     /* Destructor for the TopicMonitor */
     ~TopicMonitor();
 
 
@@ -29,14 +27,14 @@ private:
     void getAllTopics();
     bool isValidTopic(std::string &topic);
 
+    /*Member variables*/
     std::vector<std::string> m_topicListOriginal;
-    std::vector<shared_ptr<TopicStatistics> > monitor_list_;
+    std::vector<std::shared_ptr<TopicStatistics> > monitor_list_;
     std::unordered_map<std::string ,double> m_validTopicMap;
     XmlRpc::XmlRpcValue m_topicList;
 
 
     std::shared_ptr<Monitor> m_topicMonitor;
-    // std::vector<FrequencyStatistics *> monitor_list_;
 
 };
 

@@ -3,7 +3,7 @@
 #include <ros/package.h>
 
 /**
-* @brief  Constructor for the Statistics
+* @brief  Constructor for the TopicMonitor
 */
 TopicMonitor::TopicMonitor():nh("~") 
 {
@@ -15,7 +15,7 @@ TopicMonitor::TopicMonitor():nh("~")
   m_topicMonitor =std::make_shared<Monitor>(nh, "Topic Monitor", true);
   for (auto& x: m_validTopicMap) 
   {
-    std::cout << x.first << "  : " << x.second << std::endl;
+    //std::cout << x.first << "  : " << x.second << std::endl;
     std::shared_ptr<TopicStatistics>topicStatistics(new TopicStatistics(nh,x.first,x.second,m_topicMonitor));
     monitor_list_.push_back(topicStatistics);
   }
@@ -23,7 +23,7 @@ TopicMonitor::TopicMonitor():nh("~")
 }
 
 /**
-* @brief  Destructor for the Statistics
+* @brief  Destructor for the TopicMonitor
 */
 
 TopicMonitor::~TopicMonitor()
@@ -31,6 +31,10 @@ TopicMonitor::~TopicMonitor()
 
 }
 
+
+/**
+* @brief  Collecting the  valid topic lists from the yaml provided by user
+*/
 void TopicMonitor::validTopicList(std::unordered_map<std::string ,double> &validTopicMap)
 {
 
@@ -72,7 +76,9 @@ void TopicMonitor::validTopicList(std::unordered_map<std::string ,double> &valid
   }
 }
 
-
+/**
+* @brief  Getting all the topics registered with the ROS master
+*/
 void TopicMonitor::getAllTopics()
 {
   ros::master::V_TopicInfo master_topics;
@@ -84,6 +90,10 @@ void TopicMonitor::getAllTopics()
   }
 }
 
+
+/**
+* @brief  Verifying whether the given topic is registered with the  ROS master
+*/
 bool TopicMonitor::isValidTopic(std::string &topic_name)
 {
 
@@ -109,16 +119,6 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "topic_monitoring");
     TopicMonitor topic_monitor;
-    //std::unique_ptr<TopicStatistics> statisticsPtr(new TopicStatistics);
-    //TopicMonitor topic_monitor(std::move(statisticsPtr));
-    ros::Rate rate(20);
     ros::spin();
-
-    // while(ros::ok())
-    // {
-    //     //topic_monitor.topicMonitoring();
-    //     rate.sleep();
-    //     ros::spinOnce();
-    // }
     return 0;
 }

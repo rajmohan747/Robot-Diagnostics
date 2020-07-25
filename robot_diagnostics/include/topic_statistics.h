@@ -1,7 +1,6 @@
 #ifndef TOPIC_STATISTICS_H
 #define TOPIC_STATISTICS_H
 #include <ros/ros.h>
-#include <geometry_msgs/Pose.h>
 #include <iostream>
 #include <chrono>
 #include <vector>
@@ -9,11 +8,12 @@
 #include <mutex>
 #include <memory>
 #include "monitoring_core/monitor.h"
-using namespace std;
-  /**
-   * @class TrajectoryController
-   * @brief A controller that follows the trajectory provided by a planner.
-   */
+#include "xmlrpcpp/XmlRpcValue.h"
+#include <unordered_map>
+
+/**
+* @class TopicStatistics
+*/
 
 
 struct GenericSubsriber
@@ -28,41 +28,43 @@ struct GenericSubsriber
 class TopicStatistics
 {
 public:
-        /**
-     * @brief  Constructor for the TrajectoryController
-     */
+/**
+ * @brief  Constructor for the TopicStatistics
+ */
 
 
 
     TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency,std::shared_ptr<Monitor> monitor);
 
-        /**
-        * @brief  Destructor for the TrajectoryController
-        */
+    /**
+    * @brief  Destructor for the TopicStatistics
+    */
     ~TopicStatistics();
-
-    ros::NodeHandle nh;
-
-     
-
-    //void robot_cb(const geometry_msgs::Pose& robot_msg);
-    void genericMessageCallback(const GenericSubsriber &data);
+    
 
 
 private:
 
-    void timerCallback(const ros::TimerEvent &e);
-    uint64_t millis(); 
-    geometry_msgs::Pose m_robotPose;
+    ros::NodeHandle nh;
 
-        /**
+    /**
      * @brief ROS Subscribers
-     */
+    */
 
 
-    //ros::Subscriber robotPose;
     ros::Subscriber universalSub;
     ros::Timer topicStatusTimer; 
+
+    /*Member functions*/
+    void genericMessageCallback(const GenericSubsriber &data);
+    void timerCallback(const ros::TimerEvent &e);
+    void publishNoTopicInfo();
+    void publishTopicDelayInfo();
+    uint64_t millis(); 
+
+
+    /*Member variables*/
+
     int m_currentSize,m_lastSize;
     uint64_t m_currentTime,m_lastTime,m_deltaTime;
     uint64_t m_startTime,m_endTime,m_diffTime;
@@ -71,7 +73,6 @@ private:
     double m_minAcceptableFrequencyFactor;
 
     bool m_setup = false;
-    
     std::vector<double> m_timeDifferences;
     std::string m_topic;
     std::mutex m_mutex;

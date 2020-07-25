@@ -1,12 +1,14 @@
 #include "topic_statistics.h"
 
-    /**
-    * @brief  Constructor for the TrajectoryController
-    */
 
 std::string GenericSubsriber::md5 = "*";
 
 std::string GenericSubsriber::data_type = "/";
+
+/**
+* @brief  Constructor for the TopicStatistics
+*/
+
 
 TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency,std::shared_ptr<Monitor> monitor)
 {
@@ -15,12 +17,11 @@ TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,doubl
     m_monitor               = monitor;
     nh.getParam("/minAcceptableFrequencyFactor", m_minAcceptableFrequencyFactor);
     ROS_WARN("Frequency statsistics constructor initialized with for %s with expected frequency of  %f Hz",m_topic.c_str(),topicFrequency);
+    
     /*Subscribers*/
     universalSub = nh.subscribe(m_topic, 1, &TopicStatistics::genericMessageCallback, this);
 
-
-    double timerUpdateFrequency = std::min(1.0,m_expectedFrequency);
-    
+    double timerUpdateFrequency = std::min(1.0,m_expectedFrequency);    
     /*Timer*/
     topicStatusTimer = nh.createTimer(ros::Duration(1.0 / timerUpdateFrequency), &TopicStatistics::timerCallback, this);
     
@@ -31,7 +32,7 @@ TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,doubl
 }
 
 /**
-* @brief  Destructor for the FrequencyStatistics
+* @brief  Destructor for the TopicStatistics
 */
 
 TopicStatistics::~TopicStatistics()
@@ -39,31 +40,36 @@ TopicStatistics::~TopicStatistics()
 
 }
 
+
+/**
+* @brief  Timer call back for the TopicStatistics
+*/
 void TopicStatistics::timerCallback(const ros::TimerEvent &e)
 {
     if(m_setup)
     {
-        ROS_INFO("Topic %s is updating with %f Hz",m_topic.c_str(),m_averageFrequency);
+        //ROS_INFO("Topic %s is updating with %f Hz",m_topic.c_str(),m_averageFrequency);
         if(m_currentSize == m_lastSize)
         {
-            ROS_WARN("No data received current : %d last :%d",m_currentSize,m_lastSize);
-            std:: string value =" not available";
-            m_monitor->addValue(m_topic, value, "", 0.6, AggregationStrategies::FIRST);
+            ROS_WARN("No data received for the topic : %s",m_topic.c_str());
+            //ROS_WARN("No data received current : %d last :%d",m_currentSize,m_lastSize);
+            publishNoTopicInfo();
         }
             
         
         if(m_averageFrequency < m_minAcceptableFrequencyFactor*m_expectedFrequency)
         {
             ROS_ERROR("Message updation of %s is slow with : %f",m_topic.c_str(),m_averageFrequency);
-            std:: string value =" delay in  publishing dataa";
-            m_monitor->addValue(m_topic, value, "", 0.3, AggregationStrategies::FIRST);
+            publishTopicDelayInfo();
         }
         m_lastSize = m_currentSize;
         m_endTime  = m_startTime;
     }
 }
 
-
+/**
+* @brief  Generic callback function for any topic
+*/
 void TopicStatistics::genericMessageCallback(const GenericSubsriber &data)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
@@ -94,6 +100,31 @@ void TopicStatistics::genericMessageCallback(const GenericSubsriber &data)
 
 }
 
+
+/**
+* @brief  Publishes the error level when topic is not available
+*/
+
+void TopicStatistics::publishNoTopicInfo()
+{
+    std:: string value =" not available";
+    m_monitor->addValue(m_topic, value, "", 0.6, AggregationStrategies::FIRST);
+}
+
+/**
+* @brief  Publishes the error level when topic arrives with a delay
+*/
+
+void TopicStatistics::publishTopicDelayInfo()
+{
+    std:: string value =" delay in  publishing data";
+    m_monitor->addValue(m_topic, value, "", 0.3, AggregationStrategies::FIRST);   
+}
+
+/**
+* @brief  Access the system time using chrono library
+* @return time in milliseconds
+*/
 uint64_t TopicStatistics::millis() 
 {
 	uint64_t ms =std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
