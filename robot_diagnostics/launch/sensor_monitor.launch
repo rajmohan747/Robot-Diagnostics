@@ -1,0 +1,6 @@
+<launch>
+  <!-- robot_diagnostics -->
+  <rosparam command="load" file="$(find robot_diagnostics)/config/sensor_monitor.yaml"/>
+  <node pkg="robot_diagnostics" type="sensor_monitoring" respawn="false" name="sensor_monitoring" output="screen">
+  </node>
+</launch>

@@ -1,0 +1,6 @@
+sensors: 
+  - node: abc
+    topic: /imu
+  - node: cde
+    topic: /battery
+

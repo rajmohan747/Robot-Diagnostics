@@ -69,6 +69,17 @@ target_link_libraries(topic_monitoring
   ${catkin_LIBRARIES}
 )
 
+
+add_executable(sensor_monitoring
+  src/sensor_monitor.cpp
+  src/sensor_statistics.cpp
+)
+
+target_link_libraries(sensor_monitoring
+  ${catkin_LIBRARIES}
+)
+
+
 add_executable(diagnostics_server
   src/diagnostics_server.cpp
 )
@@ -87,6 +98,13 @@ target_link_libraries(xmlrpc
 
 
 
+add_executable(dummyPublisher
+  src/dummyPublisher.cpp
+)
+
+target_link_libraries(dummyPublisher
+  ${catkin_LIBRARIES}
+)
 
 #add_dependencies(trajectory_controller ${PROJECT_NAME}_gencfg)
 
