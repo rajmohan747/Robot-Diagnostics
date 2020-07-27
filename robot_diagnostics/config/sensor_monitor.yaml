@@ -1,6 +1,6 @@
-sensors: 
+sensorss: 
   - node: abc
     topic: /imu
   - node: cde
     topic: /battery
-
+sensors: ["/imu","/battery"]

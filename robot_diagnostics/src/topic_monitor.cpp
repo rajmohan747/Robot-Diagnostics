@@ -17,7 +17,7 @@ TopicMonitor::TopicMonitor():nh("~")
   {
     //std::cout << x.first << "  : " << x.second << std::endl;
     std::shared_ptr<TopicStatistics>topicStatistics(new TopicStatistics(nh,x.first,x.second,m_topicMonitor));
-    monitor_list_.push_back(topicStatistics);
+    topicMonitorList.push_back(topicStatistics);
   }
 
 }

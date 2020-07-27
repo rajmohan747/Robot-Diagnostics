@@ -20,19 +20,18 @@ private:
 
     /*Member functions*/    
     void getAllTopics();
-    void validTopicList(std::unordered_map<std::string ,std::string> &validTopicMap);
+    void validTopicList(std::vector<std::string> &validTopicList);
     bool isValidTopic(std::string &topic_name);
 
 
 
     /*Member variables*/
+    std::vector<std::string> m_sensorTopicList;
     std::vector<std::string> m_topicListOriginal;
-    std::unordered_map<std::string ,std::string> m_validTopicMap;
-    XmlRpc::XmlRpcValue m_topicList;
-    std::vector<std::shared_ptr<SensorStatistics> > monitor_list_;
+    std::vector<std::shared_ptr<SensorStatistics> > sensorMonitorList;
 
-    //Monitor *monitor_;
-    std::shared_ptr<Monitor> m_topicMonitor;
+
+    std::shared_ptr<Monitor> m_sensorMonitor;
 };
 
 

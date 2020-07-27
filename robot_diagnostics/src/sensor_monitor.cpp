@@ -6,21 +6,13 @@
 */
 SensorMonitor::SensorMonitor():nh("~") 
 {
-  
-  ROS_INFO("SensorMonitor constructor called");
   getAllTopics();
-  validTopicList(m_validTopicMap);
-
-  for(auto &x:m_validTopicMap)
+  validTopicList(m_sensorTopicList);
+  m_sensorMonitor =std::make_shared<Monitor>(nh, "Sensor Monitor", true);
+  for(int i=0;i < m_sensorTopicList.size();i++)
   {
-    std::cout << "Node "<<x.second << "Topic  "<< x.first<< std::endl;
-  }
-  m_topicMonitor =std::make_shared<Monitor>(nh, "Sensor Monitor", true);
-  for (auto& x: m_validTopicMap) 
-  {
-    //std::cout << x.first << "  : " << x.second << std::endl;
-    std::shared_ptr<SensorStatistics>sensorStatistics(new SensorStatistics(nh,x.first,x.second,m_topicMonitor));
-    monitor_list_.push_back(sensorStatistics);
+    std::shared_ptr<SensorStatistics>sensorStatistics(new SensorStatistics(nh,m_sensorTopicList[i],m_sensorMonitor));
+    sensorMonitorList.push_back(sensorStatistics);
   }
 
   ROS_INFO("SensorMonitor constructor called");
@@ -54,48 +46,33 @@ void SensorMonitor::getAllTopics()
 /**
 * @brief  Collecting the  valid topic lists from the yaml provided by user
 */
-void SensorMonitor::validTopicList(std::unordered_map<std::string ,std::string> &validTopicMap)
+void SensorMonitor::validTopicList(std::vector<std::string> &validTopicList)
 {
 
   std::string path = ros::package::getPath("robot_diagnostics");
-  std::unordered_map<std::string ,std::string> topicMap;
-  nh.getParam("/sensors", m_topicList);
-  //std::cout << "Here " << m_topicList << std::endl;
-  /*Getting all the topics from the yaml file*/ 
-  if (m_topicList.getType() == XmlRpc::XmlRpcValue::TypeArray)
-  {
-    //std::cout << "I am here   "<< m_topicList.size() << std::endl;
-    for(int i=0; i < m_topicList.size(); i++)
-    {
-      //std::cout << "Got in" << std::endl;
-      XmlRpc::XmlRpcValue topicObject = m_topicList[i];
-      //topicMap[topicObject["name"]] = topicObject["frequency"];
-      //std::cout <<"Mei yahaan" <<topicObject["node"] << " :  " << topicObject["topic"];
-      topicMap[std::string(topicObject["node"])] = std::string(topicObject["topic"]);
-    }
+  std::vector<std::string> topicList;
+  nh.getParam("/sensors", topicList);
 
-    /*Verifying whether the topics mentioned in the yaml file are valid or not*/
-    int totalTopicCount   = m_topicList.size();
-    int invalidTopicCount = 0;
-    for (auto& x: topicMap) 
+  int invalidTopicCount = 0;
+  int totalTopicCount = topicList.size();
+  for(int i=0;i < totalTopicCount;i++)
+  {
+    bool isValid = isValidTopic(topicList[i]);
+    if(isValid == false)
     {
-      std::string topic = x.second;
-      bool isValid = isValidTopic(topic);
-      if(isValid == false)
+      invalidTopicCount = invalidTopicCount + 1;
+      if(invalidTopicCount == totalTopicCount) 
       {
-        invalidTopicCount = invalidTopicCount + 1;
-        if(invalidTopicCount == totalTopicCount) 
-        {
-          ROS_ERROR("Please re-check the topics provided in the yaml file %s/config/topic_monitor.yaml",path.c_str());
-          exit(0);
-        }
+        ROS_ERROR("Please re-check the topics provided in the yaml file %s/config/topic_monitor.yaml",path.c_str());
+        exit(0);
       }
-      else
-      {
-        validTopicMap[topic] =  x.first;
-      }   
     }
+    else
+    {
+      validTopicList.push_back(topicList[i]);
+    }   
   }
+
 }
 
 
@@ -127,7 +104,6 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "sensor_monitoring");
   SensorMonitor sensor_monitor;
-  ros::Rate rate(20);
   ros::spin();
   return 0;
 }

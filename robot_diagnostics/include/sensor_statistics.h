@@ -23,7 +23,7 @@ public:
 
 
 
-    SensorStatistics(ros::NodeHandle &nh,std::string topicName,std::string nodeName,std::shared_ptr<Monitor> monitor);
+    SensorStatistics(ros::NodeHandle &nh,std::string topicName,std::shared_ptr<Monitor> monitor);
 
     /**
     * @brief  Destructor for the SensorStatistics
@@ -50,7 +50,6 @@ private:
 
     /*Member variables*/
 
-    std::string m_topic;
     std::shared_ptr<Monitor> m_monitor;
 };
 #endif

@@ -29,7 +29,7 @@ private:
 
     /*Member variables*/
     std::vector<std::string> m_topicListOriginal;
-    std::vector<std::shared_ptr<TopicStatistics> > monitor_list_;
+    std::vector<std::shared_ptr<TopicStatistics> > topicMonitorList;
     std::unordered_map<std::string ,double> m_validTopicMap;
     XmlRpc::XmlRpcValue m_topicList;
 
