@@ -7,8 +7,7 @@
 */
 TopicMonitor::TopicMonitor():nh("~") 
 {
-  ROS_INFO("TopicStatistics constructor called");
-
+  nh.getParam("/topicTimeOut", m_topicTimeOut);
   getAllTopics();
   validTopicList(m_validTopicMap);
 
@@ -19,6 +18,7 @@ TopicMonitor::TopicMonitor():nh("~")
     topicMonitorList.push_back(topicStatistics);
   }
 
+  m_lastTime = millis();
   topicUpdateTimer = nh.createTimer(ros::Duration(1.0), &TopicMonitor::topicTimerCallback, this);
   ROS_INFO("TopicMonitor constructor called");
   
@@ -127,15 +127,16 @@ void TopicMonitor::topicTimerCallback(const ros::TimerEvent &e)
   if(m_invalidTopics)
   {
     getAllTopics();
-
+    uint64_t timeoutTime = millis();
+    uint64_t timeoutDelta =timeoutTime - m_lastTime;
+    std::cout << "Delta time "<<timeoutDelta <<std::endl;
     /*incase if there is atleast a single sensor topic not available initially,it will be checked at fixed time intervals*/
-    if(m_invalidTopics)
-    {
+
       for(int i=0; i < m_invalidTopicList.size();i++)
       {
         std::vector<std::string>::iterator it; 
         it = std::find(m_topicListOriginal.begin(),m_topicListOriginal.end(),m_invalidTopicList[i]);
-        if (it != m_topicListOriginal.end()) 
+        if ((it != m_topicListOriginal.end()) || (timeoutDelta > (m_topicTimeOut*1000)) )
         {
           std::shared_ptr<TopicStatistics>topicStatistics(new TopicStatistics(nh,m_invalidTopicList[i],m_invalidTopicMap[m_invalidTopicList[i]],m_topicMonitor));
           topicMonitorList.push_back(topicStatistics);   
@@ -158,9 +159,20 @@ void TopicMonitor::topicTimerCallback(const ros::TimerEvent &e)
       }
       
     }
-  }
+  
 }
 
+
+
+/**
+* @brief  Access the system time using chrono library
+* @return time in milliseconds
+*/
+uint64_t TopicMonitor::millis() 
+{
+	uint64_t ms =std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+	return ms;
+}
 
 /**
  * @brief Main function

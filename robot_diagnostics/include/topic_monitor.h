@@ -21,12 +21,14 @@ public:
 
 private:
     ros::NodeHandle nh;
+    ros::Timer topicUpdateTimer; 
 
     /*Member Functions*/
     void validTopicList(std::unordered_map<std::string ,double> &validTopicMap);
     void getAllTopics();
     bool isValidTopic(std::string &topic);
     void topicTimerCallback(const ros::TimerEvent &e);
+    uint64_t millis(); 
     /*Member variables*/
     std::vector<std::string> m_topicListOriginal;
     std::vector<std::shared_ptr<TopicStatistics> > topicMonitorList;
@@ -36,7 +38,10 @@ private:
     XmlRpc::XmlRpcValue m_topicList;
     bool m_invalidTopics = false;
 
-    ros::Timer topicUpdateTimer; 
+    double m_topicTimeOut = 10.0;
+
+
+    uint64_t m_lastTime;
 
 
     std::shared_ptr<Monitor> m_topicMonitor;

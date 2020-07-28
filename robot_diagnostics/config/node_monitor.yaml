@@ -1,5 +1,8 @@
-nodeFilterType: 1
-nodes: ["/node_monitors","/rosout","/system_monitors","/amcl","/robot_pose_publisher"]
+nodeFilterType: 2    # 0 - all thre registered nodes
+                     # 1 - only then nodes mentioned in the list
+                     # 2  - all nodes other than the mentioned ones
+nodeTimeOut : 10.0   # Time out(in seconds) which the node waits for nodes mentioned 				below,before throwing error 
+nodes: ["/node_monitors","/rosout","/system_monitors","/amcl","/robot_pose_publisher","/dummyBattery"]
 maxPermissibleCpuUsage: 3.0
 maxPermissibleMemoryUsage: 3.0
 timerUpdateFrequency : 1.0

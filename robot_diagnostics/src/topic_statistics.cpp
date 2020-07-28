@@ -16,7 +16,7 @@ TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,doubl
     m_expectedFrequency     = topicFrequency;
     m_monitor               = monitor;
     nh.getParam("/minAcceptableFrequencyFactor", m_minAcceptableFrequencyFactor);
-    nh.getParam("/topicTimeOut", m_timeOut);
+    nh.getParam("/topicDataTimeOut", m_timeOut);
     
     /*Subscribers*/
     universalSub = nh.subscribe(m_topic, 1, &TopicStatistics::genericMessageCallback, this);

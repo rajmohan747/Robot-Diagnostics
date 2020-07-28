@@ -6,16 +6,19 @@
 */
 SensorMonitor::SensorMonitor():nh("~") 
 {
+  double sensorTimerUpdateFrequency;
+  nh.getParam("/sensorTimerUpdateFrequency", sensorTimerUpdateFrequency);
+
+
   getAllTopics();
   validTopicList(m_sensorTopicList);
   m_sensorMonitor =std::make_shared<Monitor>(nh, "Sensor Monitor", true);
+  
   for(int i=0;i < m_sensorTopicList.size();i++)
   {
     std::shared_ptr<SensorStatistics>sensorStatistics(new SensorStatistics(nh,m_sensorTopicList[i],m_sensorMonitor));
     sensorMonitorList.push_back(sensorStatistics);
   }
-  double sensorTimerUpdateFrequency;
-  nh.getParam("/sensorTimerUpdateFrequency", sensorTimerUpdateFrequency);
   topicStatusTimer = nh.createTimer(ros::Duration(1.0 / sensorTimerUpdateFrequency), &SensorMonitor::timerCallback, this);
   ROS_INFO("SensorMonitor constructor called");
 }

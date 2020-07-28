@@ -1,5 +1,6 @@
 minAcceptableFrequencyFactor : 0.9  # by what factor it's permissible to drop topic 					      frequency.Varies from 0.1 to 1.0
-topicTimeOut : 10.0          # Time out(in seconds) which the node waits for topics mentioned 					below,before throwing error 
+topicTimeOut : 5.0               # No of seconds the node waits for topic befoore throwing topic 					missing  eroor
+topicDataTimeOut : 10.0          # Time out(in seconds) which the node waits for topics mentioned 					below,before throwing error 
 topics: 
   - name: /robot_pose
     frequency: 10.0
