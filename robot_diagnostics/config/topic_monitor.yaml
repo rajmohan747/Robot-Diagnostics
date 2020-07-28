@@ -2,7 +2,7 @@ minAcceptableFrequencyFactor : 0.9  # by what factor it's permissible to drop to
 topics: 
   - name: /robot_pose
     frequency: 10.0
-  - name: /talker2/chatter
-    frequency: 10.1
   - name: /odom
+    frequency: 12.0
+  - name: /odoms
     frequency: 12.0

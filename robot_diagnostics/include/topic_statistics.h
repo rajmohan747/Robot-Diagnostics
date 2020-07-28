@@ -10,7 +10,7 @@
 #include "monitoring_core/monitor.h"
 #include "xmlrpcpp/XmlRpcValue.h"
 #include <unordered_map>
-
+#include <string>
 /**
 * @class TopicStatistics
 */
