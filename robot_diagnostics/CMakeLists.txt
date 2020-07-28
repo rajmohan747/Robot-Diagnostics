@@ -98,14 +98,22 @@ target_link_libraries(xmlrpc
 
 
 
-add_executable(dummyPublisher
-  src/dummyPublisher.cpp
+add_executable(dummyBattery
+  src/dummyBattery.cpp
 )
 
-target_link_libraries(dummyPublisher
+target_link_libraries(dummyBattery
   ${catkin_LIBRARIES}
 )
 
+
+add_executable(dummyImu
+  src/dummyImu.cpp
+)
+
+target_link_libraries(dummyImu
+  ${catkin_LIBRARIES}
+)
 #add_dependencies(trajectory_controller ${PROJECT_NAME}_gencfg)
 
 #find_package(PythonLibs REQUIRED)

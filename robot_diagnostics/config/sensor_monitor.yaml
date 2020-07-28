@@ -1,6 +1,2 @@
-sensorss: 
-  - node: abc
-    topic: /imu
-  - node: cde
-    topic: /battery
+sensorTimerUpdateFrequency : 1.0 # Frequency at which the topics should be checked if all are not available at first instance
 sensors: ["/imu","/battery"]
