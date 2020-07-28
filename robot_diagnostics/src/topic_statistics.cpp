@@ -16,7 +16,7 @@ TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,doubl
     m_expectedFrequency     = topicFrequency;
     m_monitor               = monitor;
     nh.getParam("/minAcceptableFrequencyFactor", m_minAcceptableFrequencyFactor);
-    ROS_WARN("Frequency statsistics constructor initialized with for %s with expected frequency of  %f Hz",m_topic.c_str(),topicFrequency);
+    nh.getParam("/topicTimeOut", m_timeOut);
     
     /*Subscribers*/
     universalSub = nh.subscribe(m_topic, 1, &TopicStatistics::genericMessageCallback, this);
@@ -28,6 +28,9 @@ TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,doubl
     /*Initialization of time variables*/
     m_currentTime = m_lastTime = millis();
     m_startTime   = m_endTime  = millis();
+
+    ROS_WARN("Topic statsistics constructor initialized with for %s with expected frequency of  %f Hz",m_topic.c_str(),topicFrequency);
+
 
 }
 
@@ -48,22 +51,45 @@ void TopicStatistics::timerCallback(const ros::TimerEvent &e)
 {
     if(m_setup)
     {
-        //ROS_INFO("Topic %s is updating with %f Hz",m_topic.c_str(),m_averageFrequency);
+        /*Case-1 : Publisher was working but,in between data coming got stopped*/
         if(m_currentSize == m_lastSize)
         {
-            ROS_WARN("No data received for the topic : %s",m_topic.c_str());
-            //ROS_WARN("No data received current : %d last :%d",m_currentSize,m_lastSize);
+            ROS_WARN_ONCE("No data received for the topic : %s",m_topic.c_str());
             publishNoTopicInfo();
+            m_topicHealth = false;
         }
             
-        
-        if(m_averageFrequency < m_minAcceptableFrequencyFactor*m_expectedFrequency)
+        /*Case-2 : Topic is being published,but at a slower rate*/
+        else if(m_averageFrequency < m_minAcceptableFrequencyFactor*m_expectedFrequency)
         {
-            ROS_ERROR("Message updation of %s is slow with : %f",m_topic.c_str(),m_averageFrequency);
+            ROS_ERROR_ONCE("Message updation of %s is slow with : %f",m_topic.c_str(),m_averageFrequency);
             publishTopicDelayInfo();
+            m_topicHealth = false;
+        }
+        /*Error levels needs to be cleared,in case the topic recovers from slow/NO data cases*/
+        else
+        {
+            if(m_topicHealth == false)
+            {
+                publishTopicOkInfo();
+                m_topicHealth = true;
+            }
         }
         m_lastSize = m_currentSize;
         m_endTime  = m_startTime;
+    }
+    else
+    {
+        uint64_t timeoutTime = millis();
+        uint64_t timeoutDelta =timeoutTime - m_lastTime;
+        
+        /*Case-3 : Just topic publisher is there :no data from beginning,then after a timout period error will be thrown*/
+        if(timeoutDelta > (m_timeOut*1000))
+        {
+            ROS_ERROR_ONCE("Message updation of %s is not happening,just topic name available",m_topic.c_str());
+            publishNoTopicInfo();
+        }
+        
     }
 }
 
@@ -72,6 +98,7 @@ void TopicStatistics::timerCallback(const ros::TimerEvent &e)
 */
 void TopicStatistics::genericMessageCallback(const GenericSubsriber &data)
 {
+    
     std::unique_lock<std::mutex> lock(m_mutex);
     m_currentTime = millis();
     m_deltaTime = m_currentTime - m_lastTime;
@@ -90,6 +117,7 @@ void TopicStatistics::genericMessageCallback(const GenericSubsriber &data)
 
     m_currentSize = m_timeDifferences.size();
     
+    /*taking average of last 5 instances of time for time avg and freq avg*/
     if(m_currentSize > 5)
     {
         std::vector<double> lastNTimeDifferences (m_timeDifferences.end() - 5, m_timeDifferences.end());
@@ -119,6 +147,16 @@ void TopicStatistics::publishTopicDelayInfo()
 {
     std:: string value =" delay in  publishing data";
     m_monitor->addValue(m_topic, value, "", 0.3, AggregationStrategies::FIRST);   
+}
+
+/**
+* @brief  Publishes a 0 errorlevel ,incase if the topic recovers from no data/slow data cases
+*/
+
+void TopicStatistics::publishTopicOkInfo()
+{
+    std:: string value =" all good";
+    m_monitor->addValue(m_topic, value, "", 0.0, AggregationStrategies::FIRST);   
 }
 
 /**

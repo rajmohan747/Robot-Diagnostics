@@ -10,6 +10,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
 
     ros::Publisher secondPub = n.advertise<monitoring_msgs::MonitoringArray>("battery", 1000);
+ros::Publisher second = n.advertise<monitoring_msgs::MonitoringArray>("dummybattery", 1000);
     ros::Rate loop_rate(1);
 
     ROS_INFO("Started");

@@ -142,7 +142,7 @@ void TopicMonitor::topicTimerCallback(const ros::TimerEvent &e)
           m_invalidTopicList.erase(std::remove(m_invalidTopicList.begin(), m_invalidTopicList.end(), m_invalidTopicList[i]), m_invalidTopicList.end());        //= std::remove(m_topicListOriginal.begin(),m_topicListOriginal.end(),m_invalidTopicList[i]);
 
           ROS_INFO("Found %s . Remaining topics : %d",m_invalidTopicList[i].c_str(),m_invalidTopicList.size());
-          //m_invalidTopicMap.erase(x.first);   
+           
           if(m_invalidTopicList.size() == 0)
           {
             ROS_WARN_ONCE("All the  topics are available now..Hurrey");
