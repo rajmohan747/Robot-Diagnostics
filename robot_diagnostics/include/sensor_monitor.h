@@ -1,7 +1,7 @@
 #ifndef SENSOR_MONITOR_H
 #define SENSOR_MONITOR_H
 #include "sensor_statistics.h"
-
+#include "utilities.h"
 
 class SensorMonitor
 {
@@ -19,9 +19,9 @@ private:
     ros::NodeHandle nh;
 
     /*Member functions*/    
-    void getAllTopics();
+    //void getAllTopics();
     void validTopicList(std::vector<std::string> &validTopicList);
-    bool isValidTopic(std::string &topic_name);
+    //bool isValidTopic(std::string &topic_name);
     void timerCallback(const ros::TimerEvent &e);
 
 

@@ -2,7 +2,6 @@
 #define NODE_STATISTICS_H
 #include <ros/ros.h>
 #include <iostream>
-#include "utils.h"
 #include <fstream>
 #include <mutex>
 #include <memory>
@@ -10,7 +9,7 @@
 #include <unistd.h>
 #include "unordered_map"
 #include "monitoring_core/monitor.h"
-
+#include "utilities.h"
 /**
 * @class NodeStatistics
 * @brief Collects the statistics data related to a node

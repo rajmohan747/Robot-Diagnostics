@@ -6,7 +6,7 @@
 
 
 #include "topic_statistics.h"
-
+#include "utilities.h"
 
 class TopicMonitor
 {
@@ -25,10 +25,11 @@ private:
 
     /*Member Functions*/
     void validTopicList(std::unordered_map<std::string ,double> &validTopicMap);
-    void getAllTopics();
-    bool isValidTopic(std::string &topic);
+    //void getAllTopics();
+    //bool isValidTopic(std::string &topic);
     void topicTimerCallback(const ros::TimerEvent &e);
-    uint64_t millis(); 
+    //uint64_t millis(); 
+    
     /*Member variables*/
     std::vector<std::string> m_topicListOriginal;
     std::vector<std::shared_ptr<TopicStatistics> > topicMonitorList;

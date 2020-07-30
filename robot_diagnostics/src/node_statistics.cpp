@@ -151,7 +151,7 @@ double NodeStatistics::computeNodeMemoryPercentage(std::string pid)
 {
   std::string line,key,unit;
   long value;
-  std::ifstream inFile(kProcDirectory + "/" + pid + kStatusFilename);
+  std::ifstream inFile(Utilities::kProcDirectory + "/" + pid + Utilities::kStatusFilename);
 //  std::unique_lock<std::mutex> lock (m_mutex);
   if(inFile.is_open())
   {
@@ -190,7 +190,7 @@ long NodeStatistics::ActiveJiffies(std::string pid)
   std::vector<std::string> dataSet;
 
 
-  std::ifstream inFile(kProcDirectory + "/" + pid +kStatFilename);
+  std::ifstream inFile(Utilities::kProcDirectory + "/" + pid +Utilities::kStatFilename);
   if (inFile.is_open()) 
   {
     std::getline(inFile, line);/*Can USE while(inFile) instead of with !inFile.eof()*/
@@ -216,7 +216,7 @@ long NodeStatistics::UpTime(std::string pid)
   std::string value;
   long seconds;
   std::vector<std::string> input;
-  std::ifstream filestream(kProcDirectory + pid + kStatFilename);
+  std::ifstream filestream(Utilities::kProcDirectory + pid + Utilities::kStatFilename);
 //  std::unique_lock<std::mutex> lock (m_mutex);
   if (filestream.is_open()) 
   {
@@ -245,7 +245,7 @@ long NodeStatistics::UpTime()
 {
   std::string line;
   long upTime, idleTime;
-  std::ifstream inFile(kProcDirectory + kUptimeFilename);
+  std::ifstream inFile(Utilities::kProcDirectory + Utilities::kUptimeFilename);
 //  std::unique_lock<std::mutex> lock (m_mutex);
   if (inFile.is_open()) 
   {
@@ -452,7 +452,7 @@ long NodeStatistics::getRamSize()
 {
   std::string line, key;
   long int value, MemTotal;
-  std::ifstream inFile(kProcDirectory + kMeminfoFilename);
+  std::ifstream inFile(Utilities::kProcDirectory + Utilities::kMeminfoFilename);
   if (inFile.is_open()) {
     while (std::getline(inFile, line)) 
     {

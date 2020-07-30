@@ -3,6 +3,7 @@
 #include "monitoring_core/monitor.h"
 #include "monitoring_msgs/MonitoringArray.h"
 #include "monitoring_msgs/KeyValue.h"
+#include "Math_Func.h"
 int main(int argc, char **argv)
 {
 
@@ -27,6 +28,10 @@ ros::Publisher second = n.advertise<monitoring_msgs::MonitoringArray>("dummybatt
     keyValue2.errorlevel=0.8;
     sen2.values.push_back(keyValue2);
     sensor2.info.push_back(sen2);
+
+    //MathFunc::dummyfun<void>();
+
+	//MathFunc::dummyfun();
 
     while(ros::ok())
     {

@@ -10,7 +10,7 @@ SensorMonitor::SensorMonitor():nh("~")
   nh.getParam("/sensorTimerUpdateFrequency", sensorTimerUpdateFrequency);
 
 
-  getAllTopics();
+  Utilities::getAllTopics<void,std::string>(m_topicListOriginal);
   validTopicList(m_sensorTopicList);
   m_sensorMonitor =std::make_shared<Monitor>(nh, "Sensor Monitor", true);
   
@@ -33,28 +33,10 @@ SensorMonitor::~SensorMonitor()
 
 
 /**
-* @brief  Getting all the topics registered with the ROS master
-*/
-void SensorMonitor::getAllTopics()
-{
-  m_topicListOriginal.clear();
-  m_topicListOriginal.resize(0);
-  ros::master::V_TopicInfo master_topics;
-  ros::master::getTopics(master_topics);
-  
-  for (ros::master::V_TopicInfo::iterator it = master_topics.begin() ; it != master_topics.end(); it++) 
-  {
-    m_topicListOriginal.push_back((*it).name);
-  }
-}
-
-
-/**
 * @brief  Collecting the  valid topic lists from the yaml provided by user
 */
 void SensorMonitor::validTopicList(std::vector<std::string> &validTopicList)
 {
-
   std::string path = ros::package::getPath("robot_diagnostics");
   std::vector<std::string> topicList;
   nh.getParam("/sensors", topicList);
@@ -63,7 +45,7 @@ void SensorMonitor::validTopicList(std::vector<std::string> &validTopicList)
   int totalTopicCount = topicList.size();
   for(int i=0;i < totalTopicCount;i++)
   {
-    bool isValid = isValidTopic(topicList[i]);
+    bool isValid = Utilities::isValidTopic<bool,std::string>(topicList[i],m_topicListOriginal);
     if(isValid == false)
     {
       m_invalidTopics  = true;
@@ -86,33 +68,13 @@ void SensorMonitor::validTopicList(std::vector<std::string> &validTopicList)
 
 
 /**
-* @brief  Verifying whether the given topic is registered with the  ROS master
-*/
-bool SensorMonitor::isValidTopic(std::string &topic_name)
-{
-
-  for(auto topic : m_topicListOriginal)
-  {
-    if(topic == topic_name)
-    {
-      return true;
-    }
-  }
-  return false;
-
-}
-
-
-
-
-/**
 * @brief  Timer call back for updating statistics,if all the sensor topics are not available in the first time
 */
 
 void SensorMonitor::timerCallback(const ros::TimerEvent &e)
 {
   /*Gets all the topics registered with the ROS master*/
-  getAllTopics();
+  Utilities::getAllTopics<void,std::string>(m_topicListOriginal);
 
   /*incase if there is atleast a single sensor topic not available initially,it will be checked at fixed time intervals*/
   if(m_invalidTopics)

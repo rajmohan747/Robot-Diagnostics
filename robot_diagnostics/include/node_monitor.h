@@ -25,11 +25,11 @@ private:
 
     /*Member functions*/
 
-    bool isValidNode(std::string &nodeName);;
+    //bool isValidNode(std::string &nodeName);;
     void updateValidNodeList(std::vector<std::string> &validNodeList);
     void applyNodeFilter(std::vector<std::string> &nodeListFiltered);
     void nodeTimerCallback(const ros::TimerEvent &e);
-    uint64_t millis();
+    //uint64_t millis();
     /*Member variables*/
 
     int m_nodeFilterType = 0;
@@ -37,7 +37,7 @@ private:
     bool m_invalidNodes =false;
     uint64_t m_lastTime;
     std::vector<std::shared_ptr<NodeStatistics> >m_nodeList;
-    std::vector<std::string> m_initialNodeList,m_validNodeList,m_invalidNodeList;
+    std::vector<std::string> m_initialNodeList,m_validNodeList,m_invalidNodeList,m_alreadyCreatedNodeList;
     std::vector<std::string> m_nodeListOriginal,m_nodeListFiltered;
 
     //Monitor *monitor_;

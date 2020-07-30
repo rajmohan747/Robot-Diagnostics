@@ -90,7 +90,7 @@ double SystemStatistics::computeMemoryUtilization()
   std::string line, key;
   long int value, MemTotal, MemFree,Buffers;
   double memoryUtilization = 0.0;
-  std::ifstream inFile(kProcDirectory + kMeminfoFilename);
+  std::ifstream inFile(Utilities::kProcDirectory + Utilities::kMeminfoFilename);
   if (inFile.is_open()) {
     while (std::getline(inFile, line)) 
     {
@@ -158,7 +158,7 @@ std::vector<std::string> SystemStatistics::getCpuData()
   std::string value;
   std::vector<std::string> dataSet;
 
-  std::ifstream inFile(kProcDirectory + kStatFilename);
+  std::ifstream inFile(Utilities::kProcDirectory + Utilities::kStatFilename);
   if (inFile.is_open()) 
   {
     /*Accessing single line only and iterating to the  end of that first line with key 'cpu'*/
@@ -185,7 +185,7 @@ std::vector<std::string> SystemStatistics::getCpuData()
 */
 long SystemStatistics::ActiveJiffies() 
 { 
-  return (std::stol(m_cpuData[CPUStates::kUser_])) + (std::stol(m_cpuData[CPUStates::kNice_])) + (std::stol(m_cpuData[CPUStates::kSystem_])) + (std::stol(m_cpuData[CPUStates::kIRQ_])) + (std::stol(m_cpuData[CPUStates::kSoftIRQ_])) + (std::stol(m_cpuData[CPUStates::kSteal_]));
+  return (std::stol(m_cpuData[Utilities::CPUStates::kUser_])) + (std::stol(m_cpuData[Utilities::CPUStates::kNice_])) + (std::stol(m_cpuData[Utilities::CPUStates::kSystem_])) + (std::stol(m_cpuData[Utilities::CPUStates::kIRQ_])) + (std::stol(m_cpuData[Utilities::CPUStates::kSoftIRQ_])) + (std::stol(m_cpuData[Utilities::CPUStates::kSteal_]));
 }
 
 /**
@@ -194,7 +194,7 @@ long SystemStatistics::ActiveJiffies()
 */
 long SystemStatistics::IdleJiffies() 
 { 
-  return (std::stol(m_cpuData[CPUStates::kIdle_]) + (stol(m_cpuData[CPUStates::kIOwait_])));
+  return (std::stol(m_cpuData[Utilities::CPUStates::kIdle_]) + (stol(m_cpuData[Utilities::CPUStates::kIOwait_])));
 }
 
 /**

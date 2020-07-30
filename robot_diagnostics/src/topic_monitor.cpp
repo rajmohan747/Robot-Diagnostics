@@ -8,7 +8,7 @@
 TopicMonitor::TopicMonitor():nh("~") 
 {
   nh.getParam("/topicTimeOut", m_topicTimeOut);
-  getAllTopics();
+  Utilities::getAllTopics<void,std::string>(m_topicListOriginal);
   validTopicList(m_validTopicMap);
 
   m_topicMonitor =std::make_shared<Monitor>(nh, "Topic Monitor", true);
@@ -18,7 +18,7 @@ TopicMonitor::TopicMonitor():nh("~")
     topicMonitorList.push_back(topicStatistics);
   }
 
-  m_lastTime = millis();
+  m_lastTime =  Utilities::millis<uint64_t>();
   topicUpdateTimer = nh.createTimer(ros::Duration(1.0), &TopicMonitor::topicTimerCallback, this);
   ROS_INFO("TopicMonitor constructor called");
   
@@ -60,7 +60,7 @@ void TopicMonitor::validTopicList(std::unordered_map<std::string ,double> &valid
     for (auto& x: topicMap) 
     {
       std::string topic = x.first;
-      bool isValid = isValidTopic(topic);
+      bool isValid = Utilities::isValidTopic<bool,std::string>(topic,m_topicListOriginal);
       if(isValid == false)
       {
         m_invalidTopics  = true;
@@ -81,39 +81,6 @@ void TopicMonitor::validTopicList(std::unordered_map<std::string ,double> &valid
   }
 }
 
-/**
-* @brief  Getting all the topics registered with the ROS master
-*/
-void TopicMonitor::getAllTopics()
-{
-  m_topicListOriginal.clear();
-  m_topicListOriginal.resize(0);
-  ros::master::V_TopicInfo master_topics;
-  ros::master::getTopics(master_topics);
-  
-  for (ros::master::V_TopicInfo::iterator it = master_topics.begin() ; it != master_topics.end(); it++) 
-  {
-    m_topicListOriginal.push_back((*it).name);
-  }
-}
-
-
-/**
-* @brief  Verifying whether the given topic is registered with the  ROS master
-*/
-bool TopicMonitor::isValidTopic(std::string &topic_name)
-{
-
-  for(auto topic : m_topicListOriginal)
-  {
-    if(topic == topic_name)
-    {
-      return true;
-    }
-  }
-  return false;
-
-}
 
 
 /**
@@ -126,8 +93,8 @@ void TopicMonitor::topicTimerCallback(const ros::TimerEvent &e)
 /*Gets all the topics registered with the ROS master*/
   if(m_invalidTopics)
   {
-    getAllTopics();
-    uint64_t timeoutTime = millis();
+    Utilities::getAllTopics<void,std::string>(m_topicListOriginal);
+    uint64_t timeoutTime =  Utilities::millis<uint64_t>();
     uint64_t timeoutDelta =timeoutTime - m_lastTime;
     std::cout << "Delta time "<<timeoutDelta <<std::endl;
     /*incase if there is atleast a single sensor topic not available initially,it will be checked at fixed time intervals*/
@@ -163,16 +130,6 @@ void TopicMonitor::topicTimerCallback(const ros::TimerEvent &e)
 }
 
 
-
-/**
-* @brief  Access the system time using chrono library
-* @return time in milliseconds
-*/
-uint64_t TopicMonitor::millis() 
-{
-	uint64_t ms =std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-	return ms;
-}
 
 /**
  * @brief Main function
