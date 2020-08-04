@@ -2,3 +2,15 @@ maxPermissibleCpuUsage: 3.0
 maxPermissibleMemoryUsage: 3.0
 maxPermissibleTemperature: 40000.0
 maxPermissibleAverageCpuUsage: 2.0
+
+# keys and error_levels for system.error_levels varies from 0.0 to 1.0 bases on criticality
+systemErrors: 
+  - key: totalMemoryUsage
+    error_level: 0.6
+  - key: totalCpuUsage
+    error_level: 0.6
+  - key: systemTemperature
+    error_level: 0.3
+  - key: averageLoad
+    error_level: 0.3
+

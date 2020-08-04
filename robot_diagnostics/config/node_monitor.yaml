@@ -8,4 +8,17 @@ maxPermissibleMemoryUsage: 3.0
 timerUpdateFrequency : 1.0
 maxPermissibleNodeRestart : 5
 
+# keys and error_levels for individual nodes.error_levels varies from 0.0 to 1.0 bases on criticality
+nodeErrors: 
+  - key: node_unavailable
+    error_level: 0.9
+  - key: restart
+    error_level: 0.3
+  - key: cpu_usage
+    error_level: 0.3
+  - key: memory_usage
+    error_level: 0.3
+  - key: status
+    error_level: 10.0
+
 restart_path: "/home/addverb/ADDVERB/Session/VSCODE/Demo/catkin_ws/node_stat"

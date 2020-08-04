@@ -1,7 +1,6 @@
 #include <ros/console.h> 
 #include "node_monitor.h"
 
-
 /**
 * @brief  Constructor for the NodeMonitor
 */
@@ -12,13 +11,7 @@ NodeMonitor::NodeMonitor():nh("~")
    nh.getParam("/nodes", m_initialNodeList);
    nh.getParam("/nodeFilterType", m_nodeFilterType); 
    nh.getParam("/nodeTimeOut", m_nodeTimeOut); 
-   nh.getParam("/nodeErrors", m_nodeErrors);
 
-   nh.getParam("/maxPermissibleNodeRestart", m_maxPermissibleNodeRestart);
-   nh.getParam("/maxPermissibleCpuUsage", m_maxPermissibleCpuUsage);
-   nh.getParam("/maxPermissibleMemoryUsage", m_maxPermissibleMemoryUsage);
-   nh.getParam("/timerUpdateFrequency", m_timerUpdateFrequency);
-   nodeErrorMap();
 
    /*Gets all the nodes registered in the ROS master and stores it in a vector m_nodeListOriginal*/
    ros::master::getNodes(m_nodeListOriginal);
@@ -37,7 +30,7 @@ NodeMonitor::NodeMonitor():nh("~")
    for(int i=0; i< m_validNodeList.size();i++)
    {
     //std::cout << "Filtered nodes are " <<m_validNodeList[i] << std::endl;
-    std::shared_ptr<NodeStatistics>nodeStatistics(new NodeStatistics(nh,m_validNodeList[i],m_nodeMonitor,m_nodeParams));
+    std::shared_ptr<NodeStatistics>nodeStatistics(new NodeStatistics(nh,m_validNodeList[i],m_nodeMonitor));
     m_nodeList.push_back(nodeStatistics);
     //m_alreadyCreatedNodeList.push_back(m_validNodeList[i]);
    }
@@ -62,29 +55,7 @@ NodeMonitor::~NodeMonitor()
 {
 }
 
-void NodeMonitor::nodeErrorMap()
-{
-  m_nodeParams.nodeFilterType            = m_nodeFilterType;
-  m_nodeParams.nodeTimeOut               = m_nodeTimeOut;
-  m_nodeParams.maxPermissibleCpuUsage    = m_maxPermissibleCpuUsage;
-  m_nodeParams.maxPermissibleMemoryUsage = m_maxPermissibleMemoryUsage;
-  m_nodeParams.maxPermissibleNodeRestart = m_maxPermissibleNodeRestart;
-  m_nodeParams.timerUpdateFrequency      = m_timerUpdateFrequency;
 
-
-
-    /*Getting all the topics from the yaml file*/ 
-  if (m_nodeErrors.getType() == XmlRpc::XmlRpcValue::TypeArray)
-  {
- 
-    for(int i=0; i < m_nodeErrors.size(); i++)
-    {
-      XmlRpc::XmlRpcValue errorObject = m_nodeErrors[i];
-      m_nodeParams.nodeErrorMap[errorObject["key"]] = errorObject["error_level"];
-      std::cout << errorObject["key"] << " : " << errorObject["error_level"] << std::endl;
-    }
-  }
-}
 
 void NodeMonitor::updateValidNodeList(std::vector<std::string> &validNodeList)
 {
@@ -102,6 +73,11 @@ void NodeMonitor::updateValidNodeList(std::vector<std::string> &validNodeList)
           m_invalidNodeList.push_back(m_nodeListFiltered[i]);
         }
     }
+
+    // if(m_nodeFilterType != Utilities::NodeFilter::ADD)
+    // {
+    //   m_invalidNodes = true;
+    // }
 }
 
 
@@ -143,7 +119,7 @@ void NodeMonitor::applyNodeFilter(std::vector<std::string> &nodeListFiltered)
 void NodeMonitor::nodeTimerCallback(const ros::TimerEvent &e)
 {
 
-  if(m_invalidNodes) //|| (m_nodeFilterType == Utilities::NodeFilter::REMOVE))
+  if(m_invalidNodes)
   {
        /*Gets all the nodes registered with the ROS master*/
       m_nodeListOriginal.clear();
@@ -154,16 +130,36 @@ void NodeMonitor::nodeTimerCallback(const ros::TimerEvent &e)
 
       // for(int i =0; i< m_nodeListOriginal.size();i++)
       // {
-      //   std::vector<std::string>::iterator it;
-      //   it = std::find(m_initialNodeList.begin(),m_initialNodeList.end(),m_nodeListOriginal[i]);
+      //   std::unique_lock<std::mutex>lock(m_instanceMutex);
       //   std::vector<std::string>::iterator itr;
-      //   itr = std::find(m_alreadyCreatedNodeList.begin(),m_alreadyCreatedNodeList.end(),m_nodeListOriginal[i]);          
-      //   if ((it == m_initialNodeList.end()) && (itr == m_alreadyCreatedNodeList.end()) && (m_nodeFilterType == Utilities::NodeFilter::REMOVE))      
+      //   itr = std::find(m_alreadyCreatedNodeList.begin(),m_alreadyCreatedNodeList.end(),m_nodeListOriginal[i]);
+      //   if(m_nodeFilterType == Utilities::NodeFilter::DEFAULT)
       //   {
-      //     //ROS_WARN("Filter in mode 2 ,found node : %s",m_nodeListOriginal[i].c_str());
-      //     m_invalidNodeList.push_back(m_nodeListOriginal[i]);
+      //     std::vector<std::string>::iterator it;
+      //     it = std::find(m_validNodeList.begin(),m_validNodeList.end(),m_nodeListOriginal[i]);
+        
+        
+      //     if ((it == m_validNodeList.end())&& (itr == m_alreadyCreatedNodeList.end()) )
+      //     {
+      //       m_invalidNodeList.push_back(m_nodeListOriginal[i]);
+      //       ROS_WARN("Filter type 0  node : %s",m_nodeListOriginal[i].c_str());
+      //     }
       //   }
+      //   else if (m_nodeFilterType == Utilities::NodeFilter::REMOVE)
+      //   {
+      //     std::vector<std::string>::iterator it;
+      //     it = std::find(m_initialNodeList.begin(),m_initialNodeList.end(),m_nodeListOriginal[i]);
+        
+        
+      //     if ((it == m_initialNodeList.end()) && (itr == m_alreadyCreatedNodeList.end()))
+      //     {
+      //        m_invalidNodeList.push_back(m_nodeListOriginal[i]);
+      //       ROS_WARN("Filter type 2  node : %s",m_nodeListOriginal[i].c_str());
+      //     }
+      //   }        
       // }
+
+
 
 
 
@@ -171,16 +167,18 @@ void NodeMonitor::nodeTimerCallback(const ros::TimerEvent &e)
       If not found within timeout, the constructor willl be called,which eventually will throws the error*/
       for(int i=0; i < m_invalidNodeList.size();i++)
       {
+          std::unique_lock<std::mutex>lock(m_instanceMutex);
           std::vector<std::string>::iterator it; 
           it = std::find(m_nodeListOriginal.begin(),m_nodeListOriginal.end(),m_invalidNodeList[i]);
           if ((it != m_nodeListOriginal.end()) || (timeoutDelta > (m_nodeTimeOut*1000)) )
           {
-            std::shared_ptr<NodeStatistics>nodeStatistics(new NodeStatistics(nh,m_invalidNodeList[i],m_nodeMonitor,m_nodeParams));
+            
+            std::shared_ptr<NodeStatistics>nodeStatistics(new NodeStatistics(nh,m_invalidNodeList[i],m_nodeMonitor));
             m_nodeList.push_back(nodeStatistics);
             //m_alreadyCreatedNodeList.push_back(m_invalidNodeList[i]);
             m_invalidNodeList.erase(std::remove(m_invalidNodeList.begin(), m_invalidNodeList.end(), m_invalidNodeList[i]), m_invalidNodeList.end());        //= std::remove(m_topicListOriginal.begin(),m_topicListOriginal.end(),m_invalidTopicList[i]);
 
-            ROS_INFO("Found %s . Remaining nodes : %d",m_invalidNodeList[i].c_str(),m_invalidNodeList.size());
+            ROS_INFO("Found %s . Remaining nodes : %d  Already created : %d",m_invalidNodeList[i].c_str(),m_invalidNodeList.size(),m_alreadyCreatedNodeList.size());
             
             if(m_invalidNodeList.size() == 0)
             {

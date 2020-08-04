@@ -2,10 +2,7 @@
 #include "diagnostics_server.h"
 
 
-// DiagnosticsServer::DiagnosticsServer()
-// {
-//     ROS_INFO("Diagnostics Server Initialized");
-// }
+
 
 DiagnosticsServer::~DiagnosticsServer()
 {

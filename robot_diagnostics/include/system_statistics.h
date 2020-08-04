@@ -60,8 +60,11 @@ private:
     
     std::vector<std::string> m_cpuData; 
     std::mutex m_mutex;
+    std::unordered_map<std::string ,double> systemErrorMap;
     //Monitor *m_monitor; ///< An object to monitor class
     std::shared_ptr<Monitor> m_monitor;
+
+    XmlRpc::XmlRpcValue m_systemErrors;
 
 
 };

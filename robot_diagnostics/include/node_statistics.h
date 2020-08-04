@@ -16,6 +16,17 @@
 */
 
 
+struct NodeParams
+{
+    int nodeFilterType;
+    double nodeTimeOut; 		
+    double maxPermissibleCpuUsage;
+    double maxPermissibleMemoryUsage;
+    double timerUpdateFrequency;
+    int maxPermissibleNodeRestart;
+    std::unordered_map<std::string ,double> nodeErrorMap;
+};
+
 
 class NodeStatistics
 {
@@ -23,7 +34,7 @@ class NodeStatistics
         /**
         * @brief  Constructor for the NodeStatistics
         */
-        NodeStatistics(ros::NodeHandle &nh,std::string topicName,std::shared_ptr<Monitor> m_monitor);
+        NodeStatistics(ros::NodeHandle &nh,std::string topicName,std::shared_ptr<Monitor> m_monitor,NodeParams nodeParam);
 
         /**
         * @brief  Destructor for the NodeStatistics
@@ -57,11 +68,11 @@ class NodeStatistics
         ros::Timer nodeStatusTimer; 
         std::string m_nodeName,m_lastPid;
 
-        int m_maxPermissibleNodeRestart;
+        
         int m_nodeRestartCount = 0;
-        double m_memPercentage =0.0;
+        double m_memPercentage = 0.0;
         double m_cpuPercentage = 0.0;
-        double m_maxPermissibleCPUUsage,m_maxPermissibleMemoryUsage;
+        
         long m_ramSize,m_upTime;
         char m_nodeState;
 
@@ -69,7 +80,11 @@ class NodeStatistics
         bool m_isAvailable= false;
         bool m_nodeRestart = false;
         std::unordered_map<std::string, std::string> m_nodeLog; 
+        //std::unordered_map<std::string ,double> m_nodeErrorMap;
         std::mutex m_mutex;
         std::shared_ptr<Monitor> m_monitor;
+
+        NodeParams m_nodeParam;
+        //XmlRpc::XmlRpcValue m_nodeErrors;
 };
 #endif

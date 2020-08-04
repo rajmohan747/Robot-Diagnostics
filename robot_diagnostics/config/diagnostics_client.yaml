@@ -1,0 +1,4 @@
+nodeMaxErrorOccurences : 5
+topicMaxErrorOccurences : 5
+systemMaxErrorOccurences : 5
+sensorMaxErrorOccurences : 5

@@ -11,4 +11,12 @@ topics:
   - name: /battery
     frequency: 12.0
 
+# keys and error_levels for individual topics.error_levels varies from 0.0 to 1.0 bases on criticality
+topicErrors: 
+  - key: topic_unavailable
+    error_level: 0.6
+  - key: delay
+    error_level: 0.3
+  - key: ok
+    error_level: 0.0
 

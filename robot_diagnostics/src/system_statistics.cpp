@@ -6,12 +6,24 @@
 */
 SystemStatistics::SystemStatistics():nh("~")
 {
-   ROS_INFO("Statistics constructor called");
+   ROS_INFO("System Statistics constructor called");
    nh.getParam("/maxPermissibleCpuUsage", m_cpuThreshold);
    nh.getParam("/maxPermissibleMemoryUsage", m_memoryThreshold);
    nh.getParam("/maxPermissibleTemperature", m_temperatureThreshold);
    nh.getParam("/maxPermissibleAverageCpuUsage", m_averageLoadThreshold);
-  
+   nh.getParam("/systemErrors", m_systemErrors);
+
+  /*Getting all the topics from the yaml file*/ 
+  if (m_systemErrors.getType() == XmlRpc::XmlRpcValue::TypeArray)
+  {
+    for(int i=0; i < m_systemErrors.size(); i++)
+    {
+      XmlRpc::XmlRpcValue errorObject = m_systemErrors[i];
+      systemErrorMap[errorObject["key"]] = errorObject["error_level"];
+      std::cout << errorObject["key"] << " : " << errorObject["error_level"] << std::endl;
+    }
+  }
+
   m_numberOfCores = getNumberOfCores();
   m_monitor = std::make_shared<Monitor>(nh, "System Monitor", true);
 
@@ -328,7 +340,7 @@ void SystemStatistics::publishMemoryStatistics()
    std::string key = "/totalMemoryUsage";
    std::string value = std::to_string(m_memoryPercentage);
    double error_level = 0.6; 
-   m_monitor->addValue(key, value, "%", error_level, AggregationStrategies::FIRST);
+   m_monitor->addValue(key, value, "%", systemErrorMap["totalMemoryUsage"], AggregationStrategies::FIRST);
 }
 
 /**
@@ -339,7 +351,7 @@ void SystemStatistics::publishCpuStatistics()
    std::string key = "/totalCpuUsage";
    std::string value = std::to_string(m_cpuPercentage);
    double error_level = 0.6; 
-   m_monitor->addValue(key, value, "%", error_level, AggregationStrategies::FIRST);
+   m_monitor->addValue(key, value, "%", systemErrorMap["totalCpuUsage"], AggregationStrategies::FIRST);
 }
 
 /**
@@ -350,7 +362,7 @@ void SystemStatistics::publishTemperatureStatistics(int core ,double temperature
    std::string key = "/systemTemperature";
    std::string value ="Temperature of core-"+ std::to_string(core) + " : "+ std::to_string(temperature);
    double error_level = 0.3; 
-   m_monitor->addValue(key, value, "", error_level, AggregationStrategies::FIRST);
+   m_monitor->addValue(key, value, "", systemErrorMap["systemTemperature"], AggregationStrategies::FIRST);
 }
 
 
@@ -362,5 +374,5 @@ void SystemStatistics::publishAverageLoadStatistics()
    std::string key = "/averageLoad";
    std::string value = "Average load in last 1 min: "+ std::to_string(m_averageLoad[0]) + " last 10 min : "+ std::to_string(m_averageLoad[1]) + " last 15 min : " + std::to_string(m_averageLoad[2]);
    double error_level = 0.3; 
-   m_monitor->addValue(key, value, "", error_level, AggregationStrategies::FIRST);
+   m_monitor->addValue(key, value, "", systemErrorMap["averageLoad"], AggregationStrategies::FIRST);
 }

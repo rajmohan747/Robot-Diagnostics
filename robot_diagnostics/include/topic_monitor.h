@@ -28,7 +28,7 @@ private:
     //void getAllTopics();
     //bool isValidTopic(std::string &topic);
     void topicTimerCallback(const ros::TimerEvent &e);
-    //uint64_t millis(); 
+    void topicErrorMap(); 
     
     /*Member variables*/
     std::vector<std::string> m_topicListOriginal;
@@ -40,12 +40,15 @@ private:
     bool m_invalidTopics = false;
 
     double m_topicTimeOut = 10.0;
-
+    double m_minAcceptableFrequencyFactor;
+    double m_topicDataTimeOut = 1.0;
 
     uint64_t m_lastTime;
 
 
     std::shared_ptr<Monitor> m_topicMonitor;
+    TopicParams m_topicParam; 
+    XmlRpc::XmlRpcValue m_topicErrors;
 
 };
 

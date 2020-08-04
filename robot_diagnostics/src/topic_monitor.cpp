@@ -8,13 +8,17 @@
 TopicMonitor::TopicMonitor():nh("~") 
 {
   nh.getParam("/topicTimeOut", m_topicTimeOut);
+  nh.getParam("/minAcceptableFrequencyFactor", m_minAcceptableFrequencyFactor);
+  nh.getParam("/topicDataTimeOut", m_topicDataTimeOut);
+  nh.getParam("/topicErrors", m_topicErrors);
+  topicErrorMap();
   Utilities::getAllTopics<void,std::string>(m_topicListOriginal);
   validTopicList(m_validTopicMap);
 
   m_topicMonitor =std::make_shared<Monitor>(nh, "Topic Monitor", true);
   for (auto& x: m_validTopicMap) 
   {
-    std::shared_ptr<TopicStatistics>topicStatistics(new TopicStatistics(nh,x.first,x.second,m_topicMonitor));
+    std::shared_ptr<TopicStatistics>topicStatistics(new TopicStatistics(nh,x.first,x.second,m_topicMonitor,m_topicParam));
     topicMonitorList.push_back(topicStatistics);
   }
 
@@ -33,6 +37,24 @@ TopicMonitor::~TopicMonitor()
 
 }
 
+
+
+void TopicMonitor::topicErrorMap()
+{
+  m_topicParam.minAcceptableFrequencyFactor   = m_minAcceptableFrequencyFactor;
+  m_topicParam.topicDataTimeOut               = m_topicDataTimeOut;
+
+  /*Getting all the topics from the yaml file*/ 
+  if (m_topicErrors.getType() == XmlRpc::XmlRpcValue::TypeArray)
+  {
+    for(int i=0; i < m_topicErrors.size(); i++)
+    {
+      XmlRpc::XmlRpcValue errorObject = m_topicErrors[i];
+      m_topicParam.topicErrorMap[errorObject["key"]] = errorObject["error_level"];
+      std::cout << errorObject["key"] << " : " << errorObject["error_level"] << std::endl;
+    }
+  }
+}
 
 /**
 * @brief  Collecting the  valid topic lists from the yaml provided by user
@@ -94,9 +116,9 @@ void TopicMonitor::topicTimerCallback(const ros::TimerEvent &e)
   if(m_invalidTopics)
   {
     Utilities::getAllTopics<void,std::string>(m_topicListOriginal);
-    uint64_t timeoutTime =  Utilities::millis<uint64_t>();
-    uint64_t timeoutDelta =timeoutTime - m_lastTime;
-    std::cout << "Delta time "<<timeoutDelta <<std::endl;
+    uint64_t timeoutTime  =  Utilities::millis<uint64_t>();
+    uint64_t timeoutDelta =  timeoutTime - m_lastTime;
+    //std::cout << "Delta time "<<timeoutDelta <<std::endl;
     /*incase if there is atleast a single sensor topic not available initially,it will be checked at fixed time intervals*/
 
       for(int i=0; i < m_invalidTopicList.size();i++)
@@ -105,7 +127,7 @@ void TopicMonitor::topicTimerCallback(const ros::TimerEvent &e)
         it = std::find(m_topicListOriginal.begin(),m_topicListOriginal.end(),m_invalidTopicList[i]);
         if ((it != m_topicListOriginal.end()) || (timeoutDelta > (m_topicTimeOut*1000)) )
         {
-          std::shared_ptr<TopicStatistics>topicStatistics(new TopicStatistics(nh,m_invalidTopicList[i],m_invalidTopicMap[m_invalidTopicList[i]],m_topicMonitor));
+          std::shared_ptr<TopicStatistics>topicStatistics(new TopicStatistics(nh,m_invalidTopicList[i],m_invalidTopicMap[m_invalidTopicList[i]],m_topicMonitor,m_topicParam));
           topicMonitorList.push_back(topicStatistics);   
           m_invalidTopicList.erase(std::remove(m_invalidTopicList.begin(), m_invalidTopicList.end(), m_invalidTopicList[i]), m_invalidTopicList.end());        //= std::remove(m_topicListOriginal.begin(),m_topicListOriginal.end(),m_invalidTopicList[i]);
 

@@ -88,6 +88,15 @@ target_link_libraries(diagnostics_server
   ${catkin_LIBRARIES}
 )
 
+add_executable(diagnostics_client
+  src/diagnostics_client.cpp
+  src/analyser.cpp
+)
+
+target_link_libraries(diagnostics_client
+  ${catkin_LIBRARIES}
+)
+
 add_executable(xmlrpc
   src/xmlrpc.cpp
 )
@@ -114,6 +123,17 @@ add_executable(dummyImu
 target_link_libraries(dummyImu
   ${catkin_LIBRARIES}
 )
+
+
+add_executable(prioity
+  src/prioity.cpp
+)
+
+target_link_libraries(prioity
+  ${catkin_LIBRARIES}
+)
+
+
 #add_dependencies(trajectory_controller ${PROJECT_NAME}_gencfg)
 
 #find_package(PythonLibs REQUIRED)

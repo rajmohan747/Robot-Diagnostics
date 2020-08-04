@@ -4,20 +4,15 @@
     * @brief  Constructor for the TrajectoryController
     */
 
-NodeStatistics::NodeStatistics(ros::NodeHandle &nh,std::string topicName,std::shared_ptr<Monitor> monitor):m_nodeName(topicName),m_monitor(monitor)
+NodeStatistics::NodeStatistics(ros::NodeHandle &nh,std::string topicName,std::shared_ptr<Monitor> monitor,NodeParams nodeParam):m_nodeName(topicName),m_monitor(monitor),m_nodeParam(nodeParam)
 {
 
-    double timerUpdateFrequency = 1.0;
-    nh.getParam("/timerUpdateFrequency", timerUpdateFrequency);
-    nh.getParam("/maxPermissibleNodeRestart", m_maxPermissibleNodeRestart);
-    nh.getParam("/maxPermissibleCpuUsage", m_maxPermissibleCPUUsage);
-    nh.getParam("/maxPermissibleMemoryUsage", m_maxPermissibleMemoryUsage);
     m_ramSize     = getRamSize();
 
    /*Timer*/
 
-    nodeStatusTimer = nh.createTimer(ros::Duration(1.0 / timerUpdateFrequency), &NodeStatistics::timerCallback, this);
-    ROS_WARN("NodeStatistics constructor initialized for node : %s with max restart : %d",m_nodeName.c_str(),m_maxPermissibleNodeRestart);   
+    nodeStatusTimer = nh.createTimer(ros::Duration(1.0/m_nodeParam.timerUpdateFrequency), &NodeStatistics::timerCallback, this);
+    ROS_WARN("NodeStatistics constructor initialized for node : %s",m_nodeName.c_str());   
     
 }
 
@@ -30,22 +25,26 @@ NodeStatistics::~NodeStatistics()
 
 }
 
+
+
+
+
 void NodeStatistics::timerCallback(const ros::TimerEvent &e)
 {
 
     m_isAvailable = isNodeAvailable();
-    if((m_nodeRestartCount < m_maxPermissibleNodeRestart) && m_isAvailable)
+    if((m_nodeRestartCount < m_nodeParam.maxPermissibleNodeRestart) && m_isAvailable)
     {
       monitorNodeStatistics();
       if(m_nodeRestart)
       {
-        publishNodeUnavailableInfo(0.3);
+        publishNodeUnavailableInfo(m_nodeParam.nodeErrorMap["restart"]);
       }
     }
     else
     {
       ROS_ERROR_ONCE("Node %s has got restarted %d times",m_nodeName.c_str(),m_nodeRestartCount );
-      publishNodeUnavailableInfo(0.9);
+      publishNodeUnavailableInfo(m_nodeParam.nodeErrorMap["node_unavailable"]);
     }
 
 }
@@ -399,11 +398,11 @@ void NodeStatistics::getErrorValueFromState(std::string &value, double &error_le
 
 void NodeStatistics::publishNodeStatistics()
 {
-  if(m_cpuPercentage > m_maxPermissibleCPUUsage)
+  if(m_cpuPercentage > m_nodeParam.maxPermissibleCpuUsage)
   {
     publishNodeCpuUsage();
   }
-  if(m_memPercentage > m_maxPermissibleMemoryUsage)
+  if(m_memPercentage > m_nodeParam.maxPermissibleMemoryUsage)
   {
     publishNodeMemoryUsage();
   }
@@ -413,34 +412,35 @@ void NodeStatistics::publishNodeStatistics()
 
 void NodeStatistics::publishNodeUnavailableInfo(double error_level)
 {
-  std::string key = m_nodeName + " is unavailable/restarted ";
+  std::string key = m_nodeName + ":node_unavailable";
   m_monitor->addValue(key, m_nodeRestartCount, "times", error_level, AggregationStrategies::FIRST);
 }
 
 void NodeStatistics::publishNodeCpuUsage()
 {
     std::unique_lock<std::mutex> lock (m_mutex);
-    std::string key = m_nodeName + "/cpu_usage";
-    m_monitor->addValue(key, m_cpuPercentage, "%", 0.3, AggregationStrategies::FIRST);
+    std::string key = m_nodeName + ":cpu_usage";
+    m_monitor->addValue(key, m_cpuPercentage, "%",m_nodeParam.nodeErrorMap["cpu_usage"], AggregationStrategies::FIRST);
 }
 
 
 void NodeStatistics::publishNodeMemoryUsage()
 {
     std::unique_lock<std::mutex> lock (m_mutex);
-    std::string key = m_nodeName + "/memory_usage";    
-    m_monitor->addValue(key, m_memPercentage, "%", 0.3, AggregationStrategies::FIRST);
+    std::string key = m_nodeName + ":memory_usage";    
+    m_monitor->addValue(key, m_memPercentage, "%",m_nodeParam.nodeErrorMap["memory_usage"], AggregationStrategies::FIRST);
 }
 
 
 void NodeStatistics::publishNodeStatus()
 {
+  std::string key = m_nodeName + ":status";
   std::string value;
   double error_level;
   getErrorValueFromState(value,error_level);
 
 
- m_monitor->addValue(m_nodeName,value , "", error_level, AggregationStrategies::FIRST);
+ m_monitor->addValue(key,value , "", error_level, AggregationStrategies::FIRST);
 }
 
 

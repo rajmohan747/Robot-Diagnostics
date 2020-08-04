@@ -15,6 +15,13 @@
 * @class TopicStatistics
 */
 
+struct TopicParams
+{
+    double minAcceptableFrequencyFactor; 		
+    double topicDataTimeOut;
+    std::unordered_map<std::string ,double> topicErrorMap;
+};
+
 
 struct GenericSubsriber
 {
@@ -34,7 +41,7 @@ public:
 
 
 
-    TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency,std::shared_ptr<Monitor> monitor);
+    TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency,std::shared_ptr<Monitor> monitor,TopicParams topicParam);
 
     /**
     * @brief  Destructor for the TopicStatistics
@@ -70,9 +77,7 @@ private:
     uint64_t m_currentTime,m_lastTime,m_deltaTime;
     uint64_t m_startTime,m_endTime,m_diffTime;
     double m_averageFrequency = 0.0;
-    double m_timeOut = 1.0;
     double m_expectedFrequency;
-    double m_minAcceptableFrequencyFactor;
 
     bool m_setup = false;
     bool m_topicHealth = true;
@@ -81,5 +86,7 @@ private:
     std::mutex m_mutex;
 
     std::shared_ptr<Monitor> m_monitor;
+
+    TopicParams m_topicParam;
 };
 #endif

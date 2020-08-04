@@ -1,0 +1,57 @@
+monitors:
+  Node:
+    type: NodeAnalyser
+    monitors:
+      ping:
+        type: Critical
+        key: "unavailable"
+        action: "IntimateProcess"
+      memory:
+        type: NonCritical
+        key: "/Memory_Usage"
+        action: "AlertWarning"
+      cpu:
+        type: NonCritical
+        key: "/CPU_Usage"
+        action: "AlertWarning"
+      nodestatus:
+        type: NonCritical
+        key: "/State"
+        action: "AlertWarning"
+      noderestart:
+        type: Critical
+        key: "Node restarted "
+        action: "IntimateProcess"
+
+
+node_monitor:
+
+  - key : "unavailable"
+    type: "Critical"
+    action: "Restart"
+
+  - key : "cpu_usage"
+    type: "Non critical"
+    action: "stay calm"
+
+  - key : "memory_usage"
+    type: "Critical"
+    action: "Restart"
+
+  - key : "status"
+    type: "Non critical"
+    action: "stay calm"
+
+topic_monitor:
+
+  - key : "unavailable/restarted"
+    type: "Critical"
+    action: "Restart"
+
+  - key : "cpu_usage"
+    type: "Non critical"
+    action: "stay calm"
+
+
+
+

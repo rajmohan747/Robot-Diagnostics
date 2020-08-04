@@ -10,13 +10,12 @@ std::string GenericSubsriber::data_type = "/";
 */
 
 
-TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency,std::shared_ptr<Monitor> monitor)
+TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,double topicFrequency,std::shared_ptr<Monitor> monitor,TopicParams topicParams):m_topicParam(topicParams)
 {
     m_topic                 = topicName;
     m_expectedFrequency     = topicFrequency;
     m_monitor               = monitor;
-    nh.getParam("/minAcceptableFrequencyFactor", m_minAcceptableFrequencyFactor);
-    nh.getParam("/topicDataTimeOut", m_timeOut);
+
     
     /*Subscribers*/
     universalSub = nh.subscribe(m_topic, 1, &TopicStatistics::genericMessageCallback, this);
@@ -60,7 +59,7 @@ void TopicStatistics::timerCallback(const ros::TimerEvent &e)
         }
             
         /*Case-2 : Topic is being published,but at a slower rate*/
-        else if(m_averageFrequency < m_minAcceptableFrequencyFactor*m_expectedFrequency)
+        else if(m_averageFrequency < m_topicParam.minAcceptableFrequencyFactor*m_expectedFrequency)
         {
             ROS_ERROR_ONCE("Message updation of %s is slow with : %f",m_topic.c_str(),m_averageFrequency);
             publishTopicDelayInfo();
@@ -84,7 +83,7 @@ void TopicStatistics::timerCallback(const ros::TimerEvent &e)
         uint64_t timeoutDelta =timeoutTime - m_lastTime;
         
         /*Case-3 : Just topic publisher is there :no data from beginning,then after a timout period error will be thrown*/
-        if(timeoutDelta > (m_timeOut*1000))
+        if(timeoutDelta > (m_topicParam.topicDataTimeOut*1000))
         {
             ROS_ERROR_ONCE("Message updation of %s is not happening,just topic name available",m_topic.c_str());
             publishNoTopicInfo();
@@ -135,8 +134,8 @@ void TopicStatistics::genericMessageCallback(const GenericSubsriber &data)
 
 void TopicStatistics::publishNoTopicInfo()
 {
-    std:: string value =" not available";
-    m_monitor->addValue(m_topic, value, "", 0.6, AggregationStrategies::FIRST);
+    std:: string key =m_topic + ":topic_unavailable";
+    m_monitor->addValue(key,"", "",m_topicParam.topicErrorMap["topic_unavailable"], AggregationStrategies::FIRST);
 }
 
 /**
@@ -145,8 +144,8 @@ void TopicStatistics::publishNoTopicInfo()
 
 void TopicStatistics::publishTopicDelayInfo()
 {
-    std:: string value =" delay in  publishing data";
-    m_monitor->addValue(m_topic, value, "", 0.3, AggregationStrategies::FIRST);   
+    std:: string key =m_topic+":delay";
+    m_monitor->addValue(key, "", "", m_topicParam.topicErrorMap["delay"], AggregationStrategies::FIRST);   
 }
 
 /**
@@ -155,8 +154,8 @@ void TopicStatistics::publishTopicDelayInfo()
 
 void TopicStatistics::publishTopicOkInfo()
 {
-    std:: string value =" all good";
-    m_monitor->addValue(m_topic, value, "", 0.0, AggregationStrategies::FIRST);   
+    std:: string key = m_topic+":ok";
+    m_monitor->addValue(key, "", "", m_topicParam.topicErrorMap["ok"], AggregationStrategies::FIRST);   
 }
 
 /**
