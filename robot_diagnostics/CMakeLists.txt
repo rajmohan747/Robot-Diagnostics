@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   monitoring_core
   roslib
   robot_activity
+  message_filters
 )
 
 
@@ -28,6 +29,7 @@ catkin_package(
     std_msgs
     monitoring_core
     robot_activity
+    message_filters
 )
 ###########
 ## Build ##
@@ -88,12 +90,11 @@ target_link_libraries(diagnostics_server
   ${catkin_LIBRARIES}
 )
 
-add_executable(diagnostics_client
-  src/diagnostics_client.cpp
-  src/analyser.cpp
+add_executable(diagnostics_aggregator
+  src/diagnostics_aggregator.cpp
 )
 
-target_link_libraries(diagnostics_client
+target_link_libraries(diagnostics_aggregator
   ${catkin_LIBRARIES}
 )
 
@@ -130,6 +131,15 @@ add_executable(prioity
 )
 
 target_link_libraries(prioity
+  ${catkin_LIBRARIES}
+)
+
+
+add_executable(sync
+  src/sync.cpp
+)
+
+target_link_libraries(sync
   ${catkin_LIBRARIES}
 )
 
