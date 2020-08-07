@@ -60,6 +60,26 @@ void DiagnosticsAggregator::errorCallback(const monitoring_msgs::MonitoringArray
     bool systemReset = errorMessageUpdate(m_systemErrors,m_systemErrorsLast);
     bool sensorReset = errorMessageUpdate(m_sensorErrors,m_sensorErrorsLast); 
 
+    if(nodeReset)
+    {
+        ROS_ERROR("Node reset");
+    }
+
+    if(topicReset)
+    {
+        ROS_ERROR("Topic reset");
+    }
+
+    if(systemReset)
+    {
+        ROS_ERROR("System reset");
+    }
+
+    if(sensorReset)
+    {
+        ROS_ERROR("Sensor reset");
+    }
+
     if(nodeReset || topicReset || systemReset || sensorReset)
     {
         ROS_ERROR("New paameter,reset priority queue");
@@ -99,13 +119,26 @@ bool DiagnosticsAggregator::errorMessageUpdate(const std::vector<monitoring_msgs
     
     if(errors.size() != errorsLast.size())
     {
+        ROS_INFO("Reset coz of size :%d    :%d",errors.size(),errorsLast.size());
         return true;
     }
     for(int i =0; i< errors.size();i++)
     {
         if((errors[i].key != errorsLast[i].key) || (errors[i].errorlevel != errorsLast[i].errorlevel))
-        {
-            return true;
+        {   
+            ROS_WARN("Reset coz of size %s  : %s   :%f    :%f",
+            std::string(errors[i].key).c_str(),std::string(errorsLast[i].key).c_str(),
+            errors[i].errorlevel,errorsLast[i].errorlevel);
+            
+            if((errors[i].errorlevel < 0.3) && (errorsLast[i].errorlevel < 0.3))
+            {
+                continue;
+            }
+            else
+            {
+                return true;
+            }
+             
         }
     }
     return false;
