@@ -79,6 +79,7 @@ class NodeStatistics
         bool m_nodeSetup = false;
         bool m_isAvailable= false;
         bool m_nodeRestart = false;
+       
         std::unordered_map<std::string, std::string> m_nodeLog; 
         //std::unordered_map<std::string ,double> m_nodeErrorMap;
         std::mutex m_mutex;

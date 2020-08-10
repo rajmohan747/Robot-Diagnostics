@@ -19,8 +19,12 @@
 #include <sensor_msgs/LaserScan.h>
 #include <sensor_msgs/Image.h>
 
+#define CRITICAL_ERROR 0.8
+#define VITAL_ERROR 0.6
+#define NON_CRITICAL_ERROR 0.3
 
 using namespace message_filters;
+
 
 struct CompareError 
 { 

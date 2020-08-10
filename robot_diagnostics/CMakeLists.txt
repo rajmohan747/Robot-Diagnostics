@@ -45,6 +45,7 @@ include_directories(
 add_executable(node_monitoring
   src/node_monitor.cpp
   src/node_statistics.cpp
+  src/node_processing.cpp
 
 )
 

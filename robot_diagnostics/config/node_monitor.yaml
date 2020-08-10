@@ -1,4 +1,4 @@
-nodeFilterType: 1    # 0 - all thre registered nodes
+nodeFilterType: 2    # 0 - all thre registered nodes
                      # 1 - only then nodes mentioned in the list
                      # 2  - all nodes other than the mentioned ones
 nodeTimeOut : 10.0   # Time out(in seconds) which the node waits for nodes mentioned 				below,before throwing error 

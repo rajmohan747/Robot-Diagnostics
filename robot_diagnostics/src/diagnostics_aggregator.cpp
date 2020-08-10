@@ -25,7 +25,7 @@ DiagnosticsAggregator::DiagnosticsAggregator():m_sychronizer(m_synchronizerPolic
     double clearErrorFrequency = 0.25;
     clearQueueTimer = nh.createTimer(ros::Duration(1.0/clearErrorFrequency), &DiagnosticsAggregator::clearQueueTimerCallback, this);
 
-    //*Approximate Time Sychronizer*/
+    /*Approximate Time Sychronizer*/
     m_sychronizer.registerCallback(boost::bind(&DiagnosticsAggregator::errorCallback,this, _1, _2, _3, _4));
   
 
@@ -60,25 +60,25 @@ void DiagnosticsAggregator::errorCallback(const monitoring_msgs::MonitoringArray
     bool systemReset = errorMessageUpdate(m_systemErrors,m_systemErrorsLast);
     bool sensorReset = errorMessageUpdate(m_sensorErrors,m_sensorErrorsLast); 
 
-    if(nodeReset)
-    {
-        ROS_ERROR("Node reset");
-    }
+    // if(nodeReset)
+    // {
+    //     ROS_ERROR("Node reset");
+    // }
 
-    if(topicReset)
-    {
-        ROS_ERROR("Topic reset");
-    }
+    // if(topicReset)
+    // {
+    //     ROS_ERROR("Topic reset");
+    // }
 
-    if(systemReset)
-    {
-        ROS_ERROR("System reset");
-    }
+    // if(systemReset)
+    // {
+    //     ROS_ERROR("System reset");
+    // }
 
-    if(sensorReset)
-    {
-        ROS_ERROR("Sensor reset");
-    }
+    // if(sensorReset)
+    // {
+    //     ROS_ERROR("Sensor reset");
+    // }
 
     if(nodeReset || topicReset || systemReset || sensorReset)
     {
@@ -130,7 +130,7 @@ bool DiagnosticsAggregator::errorMessageUpdate(const std::vector<monitoring_msgs
             std::string(errors[i].key).c_str(),std::string(errorsLast[i].key).c_str(),
             errors[i].errorlevel,errorsLast[i].errorlevel);
             
-            if((errors[i].errorlevel < 0.3) && (errorsLast[i].errorlevel < 0.3))
+            if((errors[i].errorlevel < NON_CRITICAL_ERROR) && (errorsLast[i].errorlevel < NON_CRITICAL_ERROR))
             {
                 continue;
             }
@@ -235,11 +235,11 @@ void DiagnosticsAggregator::errorCategorization()
     { 
         monitoring_msgs::KeyValue p = errorQueue.top(); 
         errorQueue.pop(); 
-        if(p.errorlevel >= 0.8)
+        if(p.errorlevel >= CRITICAL_ERROR)
         {
             m_criticalErrors.keyvalues.push_back(p);
         }
-        else if ((p.errorlevel < 0.8) && (p.errorlevel >= 0.6))
+        else if ((p.errorlevel < CRITICAL_ERROR) && (p.errorlevel >= VITAL_ERROR))
         {
             m_nonCriticalErrors.keyvalues.push_back(p);
         }
