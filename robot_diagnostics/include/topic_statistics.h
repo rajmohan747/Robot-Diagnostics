@@ -9,6 +9,7 @@
 #include <memory>
 #include "monitoring_core/monitor.h"
 #include "xmlrpcpp/XmlRpcValue.h"
+#include "utilities.h"
 #include <unordered_map>
 #include <string>
 /**
@@ -68,7 +69,7 @@ private:
     void publishNoTopicInfo();
     void publishTopicDelayInfo();
     void publishTopicOkInfo();
-    uint64_t millis(); 
+   
 
 
     /*Member variables*/

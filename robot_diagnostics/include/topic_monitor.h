@@ -28,7 +28,7 @@ private:
     //void getAllTopics();
     //bool isValidTopic(std::string &topic);
     void topicTimerCallback(const ros::TimerEvent &e);
-    void topicErrorMap(); 
+    void topicErrorMapping(); 
     
     /*Member variables*/
     std::vector<std::string> m_topicListOriginal;

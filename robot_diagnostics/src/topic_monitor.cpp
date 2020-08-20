@@ -11,7 +11,7 @@ TopicMonitor::TopicMonitor():nh("~")
   nh.getParam("/minAcceptableFrequencyFactor", m_minAcceptableFrequencyFactor);
   nh.getParam("/topicDataTimeOut", m_topicDataTimeOut);
   nh.getParam("/topicErrors", m_topicErrors);
-  topicErrorMap();
+  topicErrorMapping();
   Utilities::getAllTopics<void,std::string>(m_topicListOriginal);
   validTopicList(m_validTopicMap);
 
@@ -39,7 +39,7 @@ TopicMonitor::~TopicMonitor()
 
 
 
-void TopicMonitor::topicErrorMap()
+void TopicMonitor::topicErrorMapping()
 {
   m_topicParam.minAcceptableFrequencyFactor   = m_minAcceptableFrequencyFactor;
   m_topicParam.topicDataTimeOut               = m_topicDataTimeOut;
@@ -51,7 +51,7 @@ void TopicMonitor::topicErrorMap()
     {
       XmlRpc::XmlRpcValue errorObject = m_topicErrors[i];
       m_topicParam.topicErrorMap[errorObject["key"]] = errorObject["error_level"];
-      std::cout << errorObject["key"] << " : " << errorObject["error_level"] << std::endl;
+      //std::cout << errorObject["key"] << " : " << errorObject["error_level"] << std::endl;
     }
   }
 }

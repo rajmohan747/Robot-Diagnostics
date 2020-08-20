@@ -21,11 +21,6 @@ NodeProcessing::~NodeProcessing()
 
 }
 
-
-
-
-
-
 /**
 * @brief Applies the node filters on the nodes mentioned 
 */
@@ -162,9 +157,6 @@ void NodeProcessing::removeFilterProcessing(const std::vector<std::string> &node
     if ((itr == alreadyCreatedNodeList.end())  && (it == initialNodeList.end()))  
     {
       ROS_WARN("Remove mode -  Found node : %s",nodeListOriginal[i].c_str());
-      //std::unique_lock<std::mutex> defaultlock (m_instanceMutex);
-      //std::shared_ptr<NodeStatistics>nodeStatistics(new NodeStatistics(nh,m_nodeListOriginal[i],m_nodeMonitor,m_nodeParams));
-      //m_nodeList.push_back(nodeStatistics); 
       newNodeList.push_back(nodeListOriginal[i]);
       alreadyCreatedNodeList.push_back(nodeListOriginal[i]);
     }

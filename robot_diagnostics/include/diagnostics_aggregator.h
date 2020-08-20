@@ -15,9 +15,9 @@
 #include "message_filters/subscriber.h"
 #include "message_filters/time_synchronizer.h"
 #include <message_filters/sync_policies/approximate_time.h>
-#include <nav_msgs/Odometry.h>
-#include <sensor_msgs/LaserScan.h>
-#include <sensor_msgs/Image.h>
+
+#include <std_msgs/Bool.h>
+
 
 #define CRITICAL_ERROR 0.8
 #define VITAL_ERROR 0.6
@@ -62,6 +62,7 @@ private:
     /*Publishers*/
     ros::Publisher criticalPub;
     ros::Publisher nonCriticalPub;
+    ros::Publisher velocityMuxPub;
 
     /*Timer*/
     ros::Timer clearQueueTimer; 
@@ -91,6 +92,7 @@ private:
     /*Member variables*/
 
     int m_nodeMaxErrorOccurences,m_topicMaxErrorOccurences,m_systemMaxErrorOccurences,m_sensorMaxErrorOccurences;
+    bool m_reset;
     std::vector<monitoring_msgs::KeyValue> m_nodeErrors,m_topicErrors,m_systemErrors,m_sensorErrors; 
     std::vector<monitoring_msgs::KeyValue> m_nodeErrorsLast,m_topicErrorsLast,m_systemErrorsLast,m_sensorErrorsLast; 
 
@@ -108,7 +110,7 @@ private:
     std::priority_queue<monitoring_msgs::KeyValue, std::vector<monitoring_msgs::KeyValue>, CompareError> m_errorQueue;
 
     monitoring_msgs::KeyValues m_criticalErrors,m_nonCriticalErrors;
-
+    std_msgs::Bool m_velocityMux;
 };
 
 

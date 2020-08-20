@@ -1,0 +1,2 @@
+rosBagFolder: "/home/nvidia/catkin_ws/src/robot_diagnostics/bags"
+splitTime : 10000

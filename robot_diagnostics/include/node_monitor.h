@@ -1,10 +1,9 @@
 #ifndef NODE_MONITOR_H
 #define NODE_MONITOR_H
 
-
 #include "node_statistics.h"
 #include "node_processing.h"
-
+#include <memory>
 class NodeMonitor
 {
 public:
@@ -44,17 +43,16 @@ private:
     std::vector<std::string> m_initialNodeList,m_validNodeList,m_invalidNodeList,m_alreadyCreatedNodeList;
     std::vector<std::string> m_newNodeList;
     std::vector<std::string> m_nodeListOriginal,m_nodeListFiltered;
-
-    //Monitor *monitor_;
+    
     std::shared_ptr<Monitor> m_nodeMonitor;
     std::mutex m_instanceMutex;
     
-
     std::unordered_map<std::string ,double> m_nodeErrorMap;
     XmlRpc::XmlRpcValue m_nodeErrors;
 
     NodeParams m_nodeParams;
-    NodeProcessing nodeProcessing;
+    std::shared_ptr <NodeProcessing> nodeProcessing;
+    
 
 
 };

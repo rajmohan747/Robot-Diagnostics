@@ -20,7 +20,10 @@ DiagnosticsAggregator::DiagnosticsAggregator():m_sychronizer(m_synchronizerPolic
     /*Publishers*/
     criticalPub      = nh.advertise<monitoring_msgs::KeyValues>("/critical_errors",1);
     nonCriticalPub   = nh.advertise<monitoring_msgs::KeyValues>("/noncritical_errors",1);
-    
+    velocityMuxPub   = nh.advertise<std_msgs::Bool>("/velocity_mux",1);
+
+
+
     /*Timer*/
     double clearErrorFrequency = 0.25;
     clearQueueTimer = nh.createTimer(ros::Duration(1.0/clearErrorFrequency), &DiagnosticsAggregator::clearQueueTimerCallback, this);
@@ -42,7 +45,7 @@ void DiagnosticsAggregator::errorCallback(const monitoring_msgs::MonitoringArray
     const monitoring_msgs::MonitoringArrayConstPtr& systemError,
     const monitoring_msgs::MonitoringArrayConstPtr& sensorError)
 {
-  
+    m_reset = false;
     std::unique_lock<std::mutex> errorLock(m_mutex);
 
     m_nodeErrors   = nodeError->info[0].values;
@@ -60,25 +63,25 @@ void DiagnosticsAggregator::errorCallback(const monitoring_msgs::MonitoringArray
     bool systemReset = errorMessageUpdate(m_systemErrors,m_systemErrorsLast);
     bool sensorReset = errorMessageUpdate(m_sensorErrors,m_sensorErrorsLast); 
 
-    // if(nodeReset)
-    // {
-    //     ROS_ERROR("Node reset");
-    // }
+    if(nodeReset)
+    {
+        ROS_ERROR("Node reset");
+    }
 
-    // if(topicReset)
-    // {
-    //     ROS_ERROR("Topic reset");
-    // }
+    if(topicReset)
+    {
+        ROS_ERROR("Topic reset");
+    }
 
-    // if(systemReset)
-    // {
-    //     ROS_ERROR("System reset");
-    // }
+    if(systemReset)
+    {
+        ROS_ERROR("System reset");
+    }
 
-    // if(sensorReset)
-    // {
-    //     ROS_ERROR("Sensor reset");
-    // }
+    if(sensorReset)
+    {
+        ROS_ERROR("Sensor reset");
+    }
 
     if(nodeReset || topicReset || systemReset || sensorReset)
     {
@@ -204,6 +207,7 @@ void DiagnosticsAggregator::clearQueueTimerCallback(const ros::TimerEvent &e)
 */
 void DiagnosticsAggregator::resetParameters()
 {
+    m_reset = true;
    /*clearing all the keys list in 'clearErrorFrequency' Hz*/
     m_nodeErrorKey.clear();
     m_topicErrorKey.clear();
@@ -256,12 +260,23 @@ void DiagnosticsAggregator::errorCategorization()
     {
         criticalPub.publish(m_criticalErrors);
         nonCriticalPub.publish(m_nonCriticalErrors);
+
+        
         
         ROS_INFO("Critical errors : %d",m_criticalErrors.keyvalues.size());
         ROS_INFO("Non Critical errors : %d",m_nonCriticalErrors.keyvalues.size());
         ROS_INFO("Non errors : %d",nonErrors.keyvalues.size());
     }
 
+    /*Publish velocity mux only when resetParameter() not called*/
+    if(m_reset == false)
+    {
+        m_velocityMux.data = (m_criticalErrors.keyvalues.size() >0)?false:true;
+    }
+    /*TODO:Fix the possible error where,both critical and non critcal errors size changes 
+    NON ZERO to ZERO and that is not getting updated*/
+    /*Publish the velocity enable as false,even if a single critical error is available*/
+    velocityMuxPub.publish(m_velocityMux);
     
 
 }

@@ -1,8 +1,9 @@
 <launch>
-  <!-- robot_diagnostics -->
-  <rosparam command="load" file="$(find robot_diagnostics)/config/node_monitor.yaml"/>
-  <node pkg="robot_diagnostics" type="node_monitoring" respawn="false" name="node_monitoring" output="screen">
-  </node>
-  <node pkg="robot_diagnostics" type="diagnostics_server" respawn="false" name="diagnostics_server" output="screen">
-  </node>
+
+
+ <include file="$(find robot_diagnostics)/launch/node_monitor.launch"/>
+ <include file="$(find robot_diagnostics)/launch/topic_monitor.launch"/>
+ <include file="$(find robot_diagnostics)/launch/system_monitor.launch"/>
+ <include file="$(find robot_diagnostics)/launch/sensor_monitor.launch"/>
+
 </launch>

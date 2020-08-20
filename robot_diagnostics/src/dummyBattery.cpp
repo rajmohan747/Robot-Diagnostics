@@ -7,7 +7,7 @@
 int main(int argc, char **argv)
 {
 
-    ros::init(argc, argv, "dummyBattery");
+    ros::init(argc, argv, "Battery");
     ros::NodeHandle n;
 
     ros::Publisher secondPub = n.advertise<monitoring_msgs::MonitoringArray>("battery", 1000);

@@ -18,20 +18,21 @@ NodeMonitor::NodeMonitor():nh("~")
 
    /*Gets all the nodes registered in the ROS master and stores it in a vector m_nodeListOriginal*/
    ros::master::getNodes(m_nodeListOriginal);
-   
+   nodeProcessing = std::make_shared<NodeProcessing>();
    /*Applying the node filters to the entire node list registered with the ROS master*/
-   nodeProcessing.applyNodeFilter(m_nodeFilterType,m_nodeListFiltered,m_nodeListOriginal,m_initialNodeList);
+   nodeProcessing->applyNodeFilter(m_nodeFilterType,m_nodeListFiltered,m_nodeListOriginal,m_initialNodeList);
    
    /*Verifying that the mentioned nodes in the yaml file are valid*/ 
-   nodeProcessing.updateValidNodeList(m_validNodeList,m_invalidNodeList,m_nodeListFiltered);
+   nodeProcessing->updateValidNodeList(m_validNodeList,m_invalidNodeList,m_nodeListFiltered);
 
    m_nodeMonitor = std::make_shared<Monitor>(nh, "Node Monitor", true);
    
    
-   m_alreadyCreatedNodeList.clear();
+
 
    /*Create instances of NodeStatistics for monitoring the valid node infos*/
-
+   m_alreadyCreatedNodeList.clear();
+   
    for(int i=0; i< m_validNodeList.size();i++)
    {
       /*Confirming right before creating instance of node statistics that,
@@ -44,6 +45,7 @@ NodeMonitor::NodeMonitor():nh("~")
       }
       else
       {
+        std::unique_lock<std::mutex> defaultlock (m_instanceMutex);
         std::shared_ptr<NodeStatistics>nodeStatistics(new NodeStatistics(nh,m_validNodeList[i],m_nodeMonitor,m_nodeParams));
         m_nodeList.push_back(nodeStatistics);
         m_alreadyCreatedNodeList.push_back(m_validNodeList[i]);
@@ -123,27 +125,26 @@ void NodeMonitor::nodeTimerCallback(const ros::TimerEvent &e)
 
 
     
+    /*Till timeout happens,accepts nodes subjected to the filter types provided*/
     
     if(m_nodeFilterType == Utilities::NodeFilter::DEFAULT)
     {
-      nodeProcessing.defaultFilterProcessing(m_nodeListOriginal,m_alreadyCreatedNodeList,m_newNodeList,m_nodeTimeOut,m_nodeWaiting);
+      nodeProcessing->defaultFilterProcessing(m_nodeListOriginal,m_alreadyCreatedNodeList,m_newNodeList,m_nodeTimeOut,m_nodeWaiting);
     }
     else if(m_nodeFilterType == Utilities::NodeFilter::ADD)
     { 
-      nodeProcessing.addFilterProcessing(m_nodeListOriginal, m_invalidNodeList,m_newNodeList,m_nodeTimeOut,m_nodeWaiting);
+      nodeProcessing->addFilterProcessing(m_nodeListOriginal, m_invalidNodeList,m_newNodeList,m_nodeTimeOut,m_nodeWaiting);
     }
     else
     {
-      nodeProcessing.removeFilterProcessing(m_nodeListOriginal,m_initialNodeList,m_alreadyCreatedNodeList,m_newNodeList,m_nodeTimeOut,m_nodeWaiting);
+      nodeProcessing->removeFilterProcessing(m_nodeListOriginal,m_initialNodeList,m_alreadyCreatedNodeList,m_newNodeList,m_nodeTimeOut,m_nodeWaiting);
     }
 
-
-    
     for(int i =0; i < m_newNodeList.size(); i++)
     {
       /*Confirming right before creating instance of node statistics that,
       node to be verified is not stray*/
-      ROS_INFO("Node statistics : %s",m_newNodeList[i].c_str());
+      
       std::string strayString = "rostopic";
       if (m_newNodeList[i].find(strayString) != std::string::npos) 
       {

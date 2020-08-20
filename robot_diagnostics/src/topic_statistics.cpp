@@ -25,9 +25,8 @@ TopicStatistics::TopicStatistics(ros::NodeHandle &nh,std::string topicName,doubl
     topicStatusTimer = nh.createTimer(ros::Duration(1.0 / timerUpdateFrequency), &TopicStatistics::timerCallback, this);
     
     /*Initialization of time variables*/
-    m_currentTime = m_lastTime = millis();
-    m_startTime   = m_endTime  = millis();
-
+    m_currentTime = m_lastTime =  Utilities::millis<uint64_t>();
+    m_startTime   = m_endTime  =  Utilities::millis<uint64_t>();
     ROS_WARN("Topic statsistics constructor initialized with for %s with expected frequency of  %f Hz",m_topic.c_str(),topicFrequency);
 
 
@@ -79,7 +78,7 @@ void TopicStatistics::timerCallback(const ros::TimerEvent &e)
     }
     else
     {
-        uint64_t timeoutTime = millis();
+        uint64_t timeoutTime =  Utilities::millis<uint64_t>();
         uint64_t timeoutDelta =timeoutTime - m_lastTime;
         
         /*Case-3 : Just topic publisher is there :no data from beginning,then after a timout period error will be thrown*/
@@ -99,7 +98,7 @@ void TopicStatistics::genericMessageCallback(const GenericSubsriber &data)
 {
     
     std::unique_lock<std::mutex> lock(m_mutex);
-    m_currentTime = millis();
+    m_currentTime =  Utilities::millis<uint64_t>();
     m_deltaTime = m_currentTime - m_lastTime;
 
     m_timeDifferences.push_back(m_deltaTime);
@@ -158,13 +157,5 @@ void TopicStatistics::publishTopicOkInfo()
     m_monitor->addValue(key, "", "", m_topicParam.topicErrorMap["ok"], AggregationStrategies::FIRST);   
 }
 
-/**
-* @brief  Access the system time using chrono library
-* @return time in milliseconds
-*/
-uint64_t TopicStatistics::millis() 
-{
-	uint64_t ms =std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
-	return ms;
-}
+
 

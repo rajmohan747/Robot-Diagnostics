@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   roslib
   robot_activity
   message_filters
+  	bag_recorder
 )
 
 
@@ -30,6 +31,7 @@ catkin_package(
     monitoring_core
     robot_activity
     message_filters
+    bag_recorder
 )
 ###########
 ## Build ##
@@ -99,6 +101,15 @@ target_link_libraries(diagnostics_aggregator
   ${catkin_LIBRARIES}
 )
 
+
+add_executable(diagnostics_recovery
+  src/diagnostics_recovery.cpp
+)
+
+target_link_libraries(diagnostics_recovery
+  ${catkin_LIBRARIES}
+)
+
 add_executable(xmlrpc
   src/xmlrpc.cpp
 )
@@ -141,6 +152,23 @@ add_executable(sync
 )
 
 target_link_libraries(sync
+  ${catkin_LIBRARIES}
+)
+
+add_executable(minimal
+  src/minimal.cpp
+)
+
+target_link_libraries(minimal
+  ${catkin_LIBRARIES}
+)
+
+
+add_executable(rosbag_recorder
+  src/rosbag_recorder.cpp
+)
+
+target_link_libraries(rosbag_recorder
   ${catkin_LIBRARIES}
 )
 
