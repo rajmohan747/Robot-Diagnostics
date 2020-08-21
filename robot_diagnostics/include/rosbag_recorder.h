@@ -18,11 +18,15 @@
 #include <stdio.h>
 #include <vector>
 #include <utilities.h>
+#include <mutex>
+#include <chrono>
+
+#define MINUTETOMILLIS 60000 //60000
+#define MINUTETOSECONDS 60  //60
+#define BYTESTOMB 0.000001
 class RosBagRecorder
 {
 public:
-
-    /* Constructor for the RosBagRecorder class */ 
     RosBagRecorder();
 
      /* Destructor for the RosBagRecorder class */
@@ -56,17 +60,25 @@ private:
     void startRecording(); 
     void stopRecording();
     void removeBagFile(std::string bagName);
-    void GetBagSize(std::string bagName);
-    int GetBagCount(std::string bagFolder,std::vector<std::string> &fileNames);
+    void removeInactiveBags(std::string bagFolder);
+    void findActiveBag(std::string bagFolder);
+    double GetBagSize(std::string bagName);
+    void GetBagFiles(std::string bagFolder,std::vector<std::string> &fileNames);
     int timeFromLastModification(std::string bagName);
     std::string GetTimeStr();
    // std::size_t number_of_files_in_directory(std::filesystem::path path);
 
     /*Member variables*/
     std::string m_rosBagFolder;
+    std::string m_currentFileName;
     std::vector <std::string> m_fileNames;
+    std::mutex m_mutex;
+
+    
 
     int m_splitTime;
+    int m_oldFileDeletionTime;
+    double m_maxBagSize;
     bool m_recording = false;
 
     uint64_t m_lastTime;
