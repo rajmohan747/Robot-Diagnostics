@@ -6,14 +6,16 @@ RosBagRecorder::RosBagRecorder()
 {
     /*Parameters from parameter server*/
 
-    nh.getParam("/rosBagFolder", m_rosBagFolder);
+    
     nh.getParam("/splitTime",m_splitTime);
     nh.getParam("/oldFileDeletionTime",m_oldFileDeletionTime);
     nh.getParam("/maxBagSize",m_maxBagSize);
-    
+    nh.getParam("/maxFolderSize", m_maxFolderSize);
+
+    std::string path = ros::package::getPath("robot_diagnostics");
+    m_rosBagFolder   = path + "/bags";
     m_lastTime  = Utilities::millis<uint64_t>();
-    /*Subscribers*/
- //   nodeSubscriber.subscribe(nh, "/node_monitoring/monitoring", 1);
+
 
 
     /*Publishers*/
@@ -27,7 +29,7 @@ RosBagRecorder::RosBagRecorder()
     recordTimer  = nh.createTimer(ros::Duration(1.0), &RosBagRecorder::recordTimerCallback, this);
     clearTimer   = nh.createTimer(ros::Duration(1.0), &RosBagRecorder::clearTimerCallback, this);
 
-    removeInactiveBags(m_rosBagFolder);
+    removeInactiveBags();
 
 }  
 
@@ -43,37 +45,30 @@ RosBagRecorder::~RosBagRecorder()
 */
 void RosBagRecorder::recordTimerCallback(const ros::TimerEvent &e)
 {
-    // ROS_INFO("Current file size : %d",m_fileNames.size());
-
-    //     for(int i =0; i < m_fileNames.size(); i++)
-    //     {
-    //         ROS_WARN("debugging : %s",m_fileNames[i].c_str());
-    //     }
-    //     std::cout << ""<< std::endl;
+    std::unique_lock<std::mutex> recordLock(m_mutex);
     uint64_t timeoutTime   = Utilities::millis<uint64_t>();
     uint64_t timeoutDelta  = timeoutTime - m_lastTime;
 
     
     bool bagSizeCondition = (GetBagSize(m_currentFileName) > m_maxBagSize);
     bool bagTimeCondition = (timeoutDelta > (m_splitTime*MINUTETOMILLIS));
-    findActiveBag(m_rosBagFolder);
+    findActiveBag();
     if(!m_recording)
-    {
-        std::unique_lock<std::mutex> startlock(m_mutex);
+    {   
         startRecording();
         m_lastTime    = Utilities::millis<uint64_t>();  
     }
 
     else if(bagSizeCondition || bagTimeCondition)
     {
-        std::unique_lock<std::mutex> stoplock(m_mutex);
         stopRecording(); 
         m_lastTime    = Utilities::millis<uint64_t>();  
     }
 
 
     
-    GetBagFiles(m_rosBagFolder,m_fileNames);
+    GetBagFiles(m_fileNames);
+    GetFolderSize();
     std::cout << "Time : "<< timeoutDelta << std::endl;
 }
 
@@ -82,15 +77,28 @@ void RosBagRecorder::recordTimerCallback(const ros::TimerEvent &e)
 */
 void RosBagRecorder::clearTimerCallback(const ros::TimerEvent &e)
 {
+    if(m_totalBagsSize > m_maxFolderSize)
+    {
+        ROS_ERROR("Folder size exceeded limits : %f",m_totalBagsSize);
+    }
     for(int i=0; i < m_fileNames.size(); i++)
     {
         std::string checkFile = m_rosBagFolder +"/"+ m_fileNames[i];
-        ROS_INFO("Files to be removed : %s  time : %d",checkFile.c_str(),timeFromLastModification(checkFile));
+        ROS_INFO("Files to be removed : %s  time : %d ",checkFile.c_str(),timeFromLastModification(checkFile));
+        /*If older files are found*/
         if(timeFromLastModification(checkFile) > (m_oldFileDeletionTime*MINUTETOSECONDS))
         {
             std::unique_lock<std::mutex> removelock(m_mutex);
             removeBagFile(checkFile);
             m_fileNames.erase(std::remove(m_fileNames.begin(), m_fileNames.end(), m_fileNames[i]), m_fileNames.end());
+        }
+        /*In case if total bag size greater than max size alloted,clear all*/
+        else if(m_totalBagsSize > m_maxFolderSize)
+        {
+            ROS_ERROR("Clearing entire folder");
+            std::unique_lock<std::mutex> removealllock(m_mutex);
+            removeBagFile(checkFile);
+            m_fileNames.erase(std::remove(m_fileNames.begin(), m_fileNames.end(), m_fileNames[i]), m_fileNames.end());    
         }
     }
 }
@@ -145,9 +153,9 @@ double RosBagRecorder::GetBagSize(std::string bagName)
 /**
 * @brief Gets all the bags  in the given bagFolder
 */
-void RosBagRecorder::GetBagFiles(std::string bagFolder,std::vector<std::string> &fileNames)
+void RosBagRecorder::GetBagFiles(std::vector<std::string> &fileNames)
 {
-    DIR* dirp = opendir(bagFolder.c_str());
+    DIR* dirp = opendir(m_rosBagFolder.c_str());
     struct dirent * dp;
     int bagCount = 0;
     while ((dp = readdir(dirp)) != NULL) 
@@ -179,12 +187,26 @@ void RosBagRecorder::GetBagFiles(std::string bagFolder,std::vector<std::string> 
     //return (bagCount - 2);
 }
 
+
+
+
+void RosBagRecorder::GetFolderSize()
+{
+    double folderSize =0.0;
+    for(int i =0; i< m_fileNames.size();i++)
+    {
+        std::string checkFile = m_rosBagFolder + "/" +m_fileNames[i];
+        folderSize = folderSize + GetBagSize(checkFile);
+    }
+    m_totalBagsSize = folderSize;
+    ROS_INFO("Total bag size : %f",m_totalBagsSize);
+}
 /**
 * @brief Remove the unncessary .active files if any
 */
-void RosBagRecorder::removeInactiveBags(std::string bagFolder)
+void RosBagRecorder::removeInactiveBags()
 {
-    DIR* dirp = opendir(bagFolder.c_str());
+    DIR* dirp = opendir(m_rosBagFolder.c_str());
     struct dirent * dp;
     int bagCount = 0;
     while ((dp = readdir(dirp)) != NULL) 
@@ -202,9 +224,9 @@ void RosBagRecorder::removeInactiveBags(std::string bagFolder)
 /**
 * @brief Finds the current active file
 */
-void RosBagRecorder::findActiveBag(std::string bagFolder)
+void RosBagRecorder::findActiveBag()
 {
-    DIR* dirp = opendir(bagFolder.c_str());
+    DIR* dirp = opendir(m_rosBagFolder.c_str());
     struct dirent * dp;
     int bagCount = 0;
     while ((dp = readdir(dirp)) != NULL) 

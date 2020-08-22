@@ -20,6 +20,7 @@
 #include <utilities.h>
 #include <mutex>
 #include <chrono>
+#include <ros/package.h>
 
 #define MINUTETOMILLIS 60000 //60000
 #define MINUTETOSECONDS 60  //60
@@ -60,10 +61,11 @@ private:
     void startRecording(); 
     void stopRecording();
     void removeBagFile(std::string bagName);
-    void removeInactiveBags(std::string bagFolder);
-    void findActiveBag(std::string bagFolder);
+    void removeInactiveBags();
+    void findActiveBag();
+    void GetFolderSize();
     double GetBagSize(std::string bagName);
-    void GetBagFiles(std::string bagFolder,std::vector<std::string> &fileNames);
+    void GetBagFiles(std::vector<std::string> &fileNames);
     int timeFromLastModification(std::string bagName);
     std::string GetTimeStr();
    // std::size_t number_of_files_in_directory(std::filesystem::path path);
@@ -78,7 +80,8 @@ private:
 
     int m_splitTime;
     int m_oldFileDeletionTime;
-    double m_maxBagSize;
+    double m_maxBagSize,m_maxFolderSize;
+    double m_totalBagsSize;
     bool m_recording = false;
 
     uint64_t m_lastTime;

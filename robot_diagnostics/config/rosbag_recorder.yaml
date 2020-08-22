@@ -1,5 +1,4 @@
-rosBagFolder: "/home/nvidia/catkin_ws/src/robot_diagnostics/bags"   #change this usign package 
 splitTime : 1  # minutes
 oldFileDeletionTime: 1 #minutes
-maxBagSize: 1.5 #MB
+maxBagSize: 2.0 #MB
 maxFolderSize: 10.0 #MB
