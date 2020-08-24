@@ -1,4 +1,11 @@
 splitTime : 1  # minutes
-oldFileDeletionTime: 1 #minutes
+oldFileDeletionTime: 5 #minutes
 maxBagSize: 2.0 #MB
 maxFolderSize: 10.0 #MB
+maxSplit: 5        
+
+##Deletion of bag file criteria
+
+#a)Either when the files last updated time gets passed 'oldFileDeletionTime' minutes OR
+#b)Folder with bags stored gets exhausted with size greater than 'maxFolderSize' MB  OR
+#c)Maximum number of split files in the folder gets greater than  'maxSplit' numbers

@@ -21,10 +21,28 @@
 #include <mutex>
 #include <chrono>
 #include <ros/package.h>
+#include <queue> 
 
 #define MINUTETOMILLIS 60000 //60000
 #define MINUTETOSECONDS 60  //60
 #define BYTESTOMB 0.000001
+
+
+struct BagInfo
+{
+    int seconds;
+    std::string bagName;
+
+};
+
+struct CompareError 
+{ 
+    bool operator()(BagInfo const& p1, BagInfo const& p2) 
+    { 
+        return p1.seconds < p2.seconds; 
+    } 
+}; 
+
 class RosBagRecorder
 {
 public:
@@ -62,12 +80,14 @@ private:
     void stopRecording();
     void removeBagFile(std::string bagName);
     void removeInactiveBags();
+    void removeAllExcessFiles();
     void findActiveBag();
     void GetFolderSize();
+    void initializeParameters();
     double GetBagSize(std::string bagName);
     void GetBagFiles(std::vector<std::string> &fileNames);
     int timeFromLastModification(std::string bagName);
-    std::string GetTimeStr();
+   
    // std::size_t number_of_files_in_directory(std::filesystem::path path);
 
     /*Member variables*/
@@ -80,11 +100,18 @@ private:
 
     int m_splitTime;
     int m_oldFileDeletionTime;
+    int m_maxSplit;
     double m_maxBagSize,m_maxFolderSize;
     double m_totalBagsSize;
     bool m_recording = false;
+    bool m_findActive = false;
 
     uint64_t m_lastTime;
+
+    BagInfo m_bagInfo;
+
+    std::priority_queue<BagInfo, std::vector<BagInfo>, CompareError> m_errorQueue;
+
 };
 
 
