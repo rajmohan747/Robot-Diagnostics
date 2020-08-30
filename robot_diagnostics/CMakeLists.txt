@@ -12,9 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   monitoring_core
   roslib
-  robot_activity
+  visualization_msgs
   message_filters
-  	bag_recorder
+  bag_recorder
 )
 
 
@@ -29,7 +29,7 @@ catkin_package(
     rospy
     std_msgs
     monitoring_core
-    robot_activity
+    visualization_msgs
     message_filters
     bag_recorder
 )
@@ -85,13 +85,7 @@ target_link_libraries(sensor_monitoring
 )
 
 
-add_executable(diagnostics_server
-  src/diagnostics_server.cpp
-)
 
-target_link_libraries(diagnostics_server
-  ${catkin_LIBRARIES}
-)
 
 add_executable(diagnostics_aggregator
   src/diagnostics_aggregator.cpp
@@ -155,14 +149,6 @@ target_link_libraries(sync
   ${catkin_LIBRARIES}
 )
 
-add_executable(minimal
-  src/minimal.cpp
-)
-
-target_link_libraries(minimal
-  ${catkin_LIBRARIES}
-)
-
 
 add_executable(rosbag_recorder
   src/rosbag_recorder.cpp
@@ -172,6 +158,15 @@ target_link_libraries(rosbag_recorder
   ${catkin_LIBRARIES}
 )
 
+
+
+add_executable(trajectory
+  src/trajectory.cpp
+)
+
+target_link_libraries(trajectory
+  ${catkin_LIBRARIES}
+)
 
 #add_dependencies(trajectory_controller ${PROJECT_NAME}_gencfg)
 

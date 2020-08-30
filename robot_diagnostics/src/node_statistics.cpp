@@ -43,7 +43,7 @@ void NodeStatistics::timerCallback(const ros::TimerEvent &e)
     }
     else
     {
-      ROS_ERROR_ONCE("Node %s has got restarted %d times",m_nodeName.c_str(),m_nodeRestartCount );
+      ROS_ERROR_ONCE("Node %s unavailable/restart for %d times",m_nodeName.c_str(),m_nodeRestartCount );
       publishNodeUnavailableInfo(m_nodeParam.nodeErrorMap["node_unavailable"]);
     }
 
@@ -65,9 +65,10 @@ void NodeStatistics::monitorNodeStatistics()
     }
     else if (m_nodeLog.find(currentPid) == m_nodeLog.end())
     {
-        m_nodeRestartCount++;
-        ROS_ERROR("Node : %s is killed with last pid %s for %d  th  time",m_nodeName.c_str(),m_lastPid.c_str(),m_nodeRestartCount);
         m_nodeLog.clear();
+        m_nodeRestartCount++;
+        ROS_ERROR("Node : %s is restarted with current pid %s last pid %s for %d  th  time",m_nodeName.c_str(),currentPid.c_str(),m_lastPid.c_str(),m_nodeRestartCount);
+        m_lastPid   = currentPid;
         m_nodeLog[currentPid] = m_nodeName;
         m_nodeRestart = true;    
     }   
@@ -97,7 +98,8 @@ std::string NodeStatistics::getPid()
   std::string data;
   int max_buffer = 256;
   char buffer[max_buffer]; 
-  std::string str = "ps ax | grep " + m_nodeName;
+  std::string str = "rosnode info " + m_nodeName + " 2>/dev/null | grep Pid| cut -d' ' -f2";
+  //std::string str = "ps ax | grep " + m_nodeName;
   //std::string str = "rosnode info " + m_nodeName +" 2>/dev/null | grep Pid| cut -d' ' -f2";
 
   /*The system command is often run first, before any output commands and the function 

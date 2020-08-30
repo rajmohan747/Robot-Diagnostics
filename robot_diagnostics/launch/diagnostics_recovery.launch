@@ -1,0 +1,6 @@
+<launch>
+  <!-- robot_diagnostics -->
+  <rosparam command="load" file="$(find robot_diagnostics)/config/diagnostics_recovery.yaml"/>
+  <node pkg="robot_diagnostics" type="diagnostics_recovery" respawn="false" name="diagnostics_recovery" output="screen">
+  </node>
+</launch>

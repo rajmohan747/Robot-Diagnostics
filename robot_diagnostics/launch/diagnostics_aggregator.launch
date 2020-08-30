@@ -1,6 +1,6 @@
 <launch>
   <!-- robot_diagnostics -->
-  <rosparam command="load" file="$(find robot_diagnostics)/config/diagnostics_client.yaml"/>
+  <rosparam command="load" file="$(find robot_diagnostics)/config/diagnostics_aggregator.yaml"/>
   <rosparam command="load" file="$(find robot_diagnostics)/config/analyser.yaml"/> 
   <node pkg="robot_diagnostics" type="diagnostics_aggregator" respawn="false" name="diagnostics_aggregator" output="screen">
   </node>

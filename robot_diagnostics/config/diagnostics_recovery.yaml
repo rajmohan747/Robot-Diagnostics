@@ -1,0 +1,11 @@
+#type   : 1 recovery happens with rosrun package node
+#         2 recovery happens roslaunch package node.launch
+
+diagnosticsRecovery: 
+  - node: dummyBattery
+    package: robot_diagnostics
+    type: 1
+  - node: dummyImu
+    package: robot_diagnostics
+    type: 1
+

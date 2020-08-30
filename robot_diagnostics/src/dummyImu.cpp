@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 
     ros::Rate loop_rate(1);
 
-    ROS_INFO("Started");
+    ROS_INFO("Started dummyImu");
     monitoring_msgs::MonitoringArray sensor1;
     monitoring_msgs::MonitoringInfo sen1;
     

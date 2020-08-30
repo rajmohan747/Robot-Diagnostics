@@ -7,14 +7,14 @@
 int main(int argc, char **argv)
 {
 
-    ros::init(argc, argv, "Battery");
+    ros::init(argc, argv, "dummyBattery");
     ros::NodeHandle n;
 
     ros::Publisher secondPub = n.advertise<monitoring_msgs::MonitoringArray>("battery", 1000);
 ros::Publisher second = n.advertise<monitoring_msgs::MonitoringArray>("dummybattery", 1000);
     ros::Rate loop_rate(1);
 
-    ROS_INFO("Started");
+    ROS_INFO("Started dummyBattery");
     monitoring_msgs::MonitoringArray sensor2;
     monitoring_msgs::MonitoringInfo sen2;
     
@@ -25,7 +25,7 @@ ros::Publisher second = n.advertise<monitoring_msgs::MonitoringArray>("dummybatt
     keyValue2.key = "battery";
     keyValue2.value ="12.5";
     keyValue2.unit ="%";
-    keyValue2.errorlevel=0.8;
+    keyValue2.errorlevel=0.4;
     sen2.values.push_back(keyValue2);
     sensor2.info.push_back(sen2);
 
