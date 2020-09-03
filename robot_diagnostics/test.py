@@ -8,5 +8,6 @@ launch = roslaunch.scriptapi.ROSLaunch()
 launch.start()
 
 process = launch.launch(node)
-print process.is_alive()
+while True:
+   print process.is_alive()
 
