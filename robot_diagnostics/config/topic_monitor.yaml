@@ -1,6 +1,4 @@
-minAcceptableFrequencyFactor : 0.9  # by what factor it's permissible to drop topic 					      frequency.Varies from 0.1 to 1.0
-topicTimeOut : 5.0               # No of seconds the node waits for topic befoore throwing topic 					missing  eroor
-topicDataTimeOut : 10.0          # Time out(in seconds) which the node waits for topics mentioned 					below,before throwing error 
+#Topics to be monitored
 topics: 
   - name: /robot_pose
     frequency: 10.0
@@ -11,7 +9,13 @@ topics:
   - name: /battery
     frequency: 12.0
 
-# keys and error_levels for individual topics.error_levels varies from 0.0 to 1.0 bases on criticality
+
+minAcceptableFrequencyFactor : 0.9  # by what factor it's permissible to drop topic frequency.Varies from 0.1 to 1.0
+topicTimeOut : 5.0                  # No of seconds the node waits for topic before throwing topic missing  eroor
+topicDataTimeOut : 10.0             # Time out(in seconds) which the node waits for topics mentioned below,before throwing error 
+
+# Different keys and corresponding error_levels for the topic
+# error_levels varies from 0.0 to 1.0 bases on criticality,with 0 being the least and 1.0 as the max
 topicErrors: 
   - key: topic_unavailable
     error_level: 0.6
@@ -20,3 +24,5 @@ topicErrors:
   - key: ok
     error_level: 0.0
 
+
+# IMPORTANT : DONT EDIT THE KEY NAME.CHANGE ONLY error_level IF REQUIRED

@@ -20,11 +20,12 @@ SystemStatistics::SystemStatistics():nh("~")
     {
       XmlRpc::XmlRpcValue errorObject = m_systemErrors[i];
       systemErrorMap[errorObject["key"]] = errorObject["error_level"];
-      std::cout << errorObject["key"] << " : " << errorObject["error_level"] << std::endl;
+      //std::cout << errorObject["key"] << " : " << errorObject["error_level"] << std::endl;
     }
   }
 
-  m_numberOfCores = getNumberOfCores();
+  /*TO DO :Find the number of cores ,this is a fix*/
+  m_numberOfCores = getNumberOfCores()/2; 
   m_monitor = std::make_shared<Monitor>(nh, "System Monitor", true);
 
 }

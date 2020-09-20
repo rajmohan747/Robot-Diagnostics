@@ -1,9 +1,11 @@
+bagDirectory : /home/ra-1/catkin_ws/src/Robot-Diagnostics/robot_diagnostics/bags/
 splitTime : 1  # minutes
 oldFileDeletionTime: 5 #minutes
-maxBagSize: 2.0 #MB
-maxFolderSize: 10.0 #MB
-maxSplit: 5        
+maxBagSize: 4.0 #MB
+maxSplit: 5     # Numbers
+maxFolderSize: 20.0 #MB > maxBagSize*maxSplit
 
+bag_topics : ["/scan","/particlecloud"]
 ##Deletion of bag file criteria
 
 #a)Either when the files last updated time gets passed 'oldFileDeletionTime' minutes OR

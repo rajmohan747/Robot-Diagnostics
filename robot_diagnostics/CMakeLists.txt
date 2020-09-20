@@ -104,15 +104,6 @@ target_link_libraries(diagnostics_recovery
   ${catkin_LIBRARIES}
 )
 
-add_executable(xmlrpc
-  src/xmlrpc.cpp
-)
-
-target_link_libraries(xmlrpc
-  ${catkin_LIBRARIES}
-)
-
-
 
 add_executable(dummyBattery
   src/dummyBattery.cpp
@@ -132,23 +123,6 @@ target_link_libraries(dummyImu
 )
 
 
-add_executable(prioity
-  src/prioity.cpp
-)
-
-target_link_libraries(prioity
-  ${catkin_LIBRARIES}
-)
-
-
-add_executable(sync
-  src/sync.cpp
-)
-
-target_link_libraries(sync
-  ${catkin_LIBRARIES}
-)
-
 
 add_executable(rosbag_recorder
   src/rosbag_recorder.cpp
@@ -160,13 +134,6 @@ target_link_libraries(rosbag_recorder
 
 
 
-add_executable(trajectory
-  src/trajectory.cpp
-)
-
-target_link_libraries(trajectory
-  ${catkin_LIBRARIES}
-)
 
 #add_dependencies(trajectory_controller ${PROJECT_NAME}_gencfg)
 

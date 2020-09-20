@@ -2,3 +2,8 @@ nodeMaxErrorOccurences : 5
 topicMaxErrorOccurences : 5
 systemMaxErrorOccurences : 5
 sensorMaxErrorOccurences : 5
+ 
+#defining ranges above which each of the error cateogories belongs to
+criticalError : 0.8
+vitalError : 0.6
+nonCriticalError : 0.3

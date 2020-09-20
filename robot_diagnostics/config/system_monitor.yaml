@@ -1,9 +1,10 @@
-maxPermissibleCpuUsage: 3.0
-maxPermissibleMemoryUsage: 3.0
-maxPermissibleTemperature: 40000.0
-maxPermissibleAverageCpuUsage: 2.0
+maxPermissibleCpuUsage: 3.0             # Max p ermissible percentage of CPU usage by whole system
+maxPermissibleMemoryUsage: 3.0          # Max permissible percentage of Memory usage by whole system
+maxPermissibleTemperature: 40000.0      # Max permissible core temperature for the system
+maxPermissibleAverageCpuUsage: 2.0      # Max permissible percentage of CPU usage(average) by whole system in last 1,10,15 minutes
 
-# keys and error_levels for system.error_levels varies from 0.0 to 1.0 bases on criticality
+# Different keys and corresponding error_levels for the system
+# error_levels varies from 0.0 to 1.0 bases on criticality,with 0 being the least and 1.0 as the max
 systemErrors: 
   - key: totalMemoryUsage
     error_level: 0.6
@@ -14,3 +15,4 @@ systemErrors:
   - key: averageLoad
     error_level: 0.3
 
+# IMPORTANT : DONT EDIT THE KEY NAME.CHANGE ONLY error_level IF REQUIRED

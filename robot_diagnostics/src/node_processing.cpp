@@ -33,17 +33,17 @@ void NodeProcessing::applyNodeFilter(int nodeFilterType,std::vector<std::string>
 
   if(nodeFilterType == Utilities::NodeFilter::DEFAULT)
   {
-    ROS_WARN("Default filter type");
+    ROS_WARN("Default filter type is applied");
     nodeListCopy = nodeListOriginal;
   }
   else if (nodeFilterType == Utilities::NodeFilter::ADD)
   {
-    ROS_WARN("ADD filter type");
+    ROS_WARN("ADD filter type is applied");
     nodeListCopy = initialNodeList;
   }
   else
   {
-    ROS_WARN("Remove filter type");
+    ROS_WARN("Remove filter type is applied");
     for (std::vector<std::string>::iterator it(initialNodeList.begin()); it != initialNodeList.end(); ++it)
     {
       nodeListCopy.erase(std::remove(begin(nodeListCopy), end(nodeListCopy), *it), end(nodeListCopy));
@@ -120,7 +120,7 @@ void NodeProcessing::addFilterProcessing( std::vector<std::string> nodeListOrigi
     
     if ( ((it != nodeListOriginal.end()) || (timeoutDelta > (nodeTimeOut*1000)) )  && (invalidNodeList.size() > 0))
     {
-      ROS_INFO("Found %s . Remaining nodes : %d",invalidNodeList[i].c_str(),invalidNodeList.size());
+      //ROS_INFO("Found %s . Remaining nodes : %d",invalidNodeList[i].c_str(),invalidNodeList.size());
       newNodeList.push_back(invalidNodeList[i]);
       invalidNodeList.erase(std::remove(invalidNodeList.begin(), invalidNodeList.end(), invalidNodeList[i]), invalidNodeList.end());        
       

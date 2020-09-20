@@ -19,9 +19,9 @@
 #include <std_msgs/Bool.h>
 
 
-#define CRITICAL_ERROR 0.8
-#define VITAL_ERROR 0.6
-#define NON_CRITICAL_ERROR 0.3
+// #define CRITICAL_ERROR 0.8
+// #define VITAL_ERROR 0.6
+// #define NON_CRITICAL_ERROR 0.3
 
 using namespace message_filters;
 
@@ -82,7 +82,7 @@ private:
 
    
     
-
+    void setParameters();
     void clearQueueTimerCallback(const ros::TimerEvent &e);
     void errorAnalysis(std::vector<std::string> &errorKey,std::unordered_map<std::string,int> &nodeErrorList,monitoring_msgs::KeyValue &nodeErrors,int maxErrorOccurence);
 
@@ -91,7 +91,8 @@ private:
 
     /*Member variables*/
 
-    int m_nodeMaxErrorOccurences,m_topicMaxErrorOccurences,m_systemMaxErrorOccurences,m_sensorMaxErrorOccurences;
+    int m_nodeMaxErrorOccurences,m_topicMaxErrorOccurences,m_systemMaxErrorOccurences,m_sensorMaxErrorOccurences; 
+    double CRITICAL_ERROR,VITAL_ERROR,NON_CRITICAL_ERROR;
     bool m_reset;
     std::vector<monitoring_msgs::KeyValue> m_nodeErrors,m_topicErrors,m_systemErrors,m_sensorErrors; 
     std::vector<monitoring_msgs::KeyValue> m_nodeErrorsLast,m_topicErrorsLast,m_systemErrorsLast,m_sensorErrorsLast; 

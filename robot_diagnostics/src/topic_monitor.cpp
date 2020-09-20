@@ -140,10 +140,10 @@ void TopicMonitor::topicTimerCallback(const ros::TimerEvent &e)
           }
 
         }
-        else
-        {
-          ROS_INFO(" topic %s is not found",m_invalidTopicList[i].c_str());
-        }
+        // else
+        // {
+        //   ROS_INFO(" topic %s is not found",m_invalidTopicList[i].c_str());
+        // }
  
       }
       

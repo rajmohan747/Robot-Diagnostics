@@ -46,7 +46,8 @@ class DiagnosticsRecovery:
         for i in range(0,paramSize):
             
             if nodeName == self.m_diagnosticsRecovery[i]["node"]:
-                print "Hereeee"
+                
+                print nodeName
                 self.currentRecovery =  self.m_diagnosticsRecovery[i]
 
                 
@@ -76,10 +77,10 @@ if __name__ == '__main__':
     dia = DiagnosticsRecovery()
     
     r = rospy.Rate(10)
-    t1 = threading.Thread(target=dia.print_cube, args=(10)) 
+    #t1 = threading.Thread(target=dia.print_cube, args=(10)) 
     #t1.join()
     # starting thread 1 
-    t1.start() 
+    #t1.start() 
     while not rospy.is_shutdown():
         x = dia.getRecovery()
         print x

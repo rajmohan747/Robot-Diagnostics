@@ -9,28 +9,23 @@ RosBagRecorder::RosBagRecorder()
 
 
     /*Publishers*/
-    //recordPub      = nh.advertise<bag_recorder::Rosbag>("/record/start",1);
-    //stopPub        = nh.advertise<std_msgs::String>("/record/stop", 10);
+    recordPub      = nh.advertise<bag_recorder::Rosbag>("/record/start",1);
+    stopPub        = nh.advertise<std_msgs::String>("/record/stop", 10);
 
 
     /*Incase previously node not closed properly, ".active" files will be left out
     Needs to clear those as well*/
     removeInactiveBags();
 
-
-    //initializeRecording();
     // /*Inorder to handle the cases where node gets restarted and the last active bag is
     // still up*/
     //stopRecording();
 
 
-    
-    
-
 
     /*Timer*/
-    //recordTimer  = nh.createTimer(ros::Duration(1.0), &RosBagRecorder::recordTimerCallback, this);
-    //clearTimer   = nh.createTimer(ros::Duration(4.0), &RosBagRecorder::clearTimerCallback, this);
+    recordTimer  = nh.createTimer(ros::Duration(1.0), &RosBagRecorder::recordTimerCallback, this);
+    clearTimer   = nh.createTimer(ros::Duration(4.0), &RosBagRecorder::clearTimerCallback, this);
 
 
     
@@ -47,108 +42,127 @@ RosBagRecorder::~RosBagRecorder()
 */
 void RosBagRecorder::initializeParameters()
 {
-    nh.getParam("/bagDirectory",m_bagDirectory);
     nh.getParam("/splitTime",m_splitTime);
     nh.getParam("/oldFileDeletionTime",m_oldFileDeletionTime);
     nh.getParam("/maxBagSize",m_maxBagSize);
     nh.getParam("/maxFolderSize", m_maxFolderSize);
     nh.getParam("maxSplit",m_maxSplit);
-    nh.getParam("/bag_topics", m_topicList);
+
     std::string packagePath = ros::package::getPath("robot_diagnostics");
     m_rosBagFolder          = packagePath + "/bags";
-    m_currentTime           = m_previousTime  = Utilities::millis<uint64_t>();
+    m_lastTime              = Utilities::millis<uint64_t>();
 }
 
-
 /**
-* @brief System command to configure the bag recording settings
-* This will be doing the bag splitting,controls number of max splits,removal of old bags from the command execution time etc
+* @brief Timer that controls the recording of ros bags
 */
-void RosBagRecorder::initializeRecording()
+void RosBagRecorder::recordTimerCallback(const ros::TimerEvent &e)
 {
-    std::string topicString;
-    for(int i=0; i < m_topicList.size(); i++)
+    std::unique_lock<std::mutex> recordLock(m_mutex);
+    uint64_t timeoutTime   = Utilities::millis<uint64_t>();
+    uint64_t timeoutDelta  = timeoutTime - m_lastTime;
+
+
+
+    /*Finds the currently active bag*/
+     
+    if(m_findActive == false)
     {
-        topicString = topicString +" "+ m_topicList[i];
+        findActiveBag();
     }
 
-    std::string recordCommand = "rosbag record -o " + m_bagDirectory + " --split --duration " + std::to_string(m_splitTime) + "m --max-splits " + std::to_string(m_maxSplit) + topicString;
-    ROS_WARN("The command is : %s",recordCommand.c_str());
-    const char *command = recordCommand.c_str(); 
-    system(command);
+    /*A new record will be started either when the time out condition gets
+    satisfied or whenever the bag size condition gets satisfied.*/
+    bool bagSizeCondition = (GetBagSize(m_currentFileName) > m_maxBagSize);
+    bool bagTimeCondition = (timeoutDelta > (m_splitTime*MINUTETOMILLIS));
+    ROS_WARN("%s : is with size : %f  time :%d",m_currentFileName.c_str(),GetBagSize(m_currentFileName) ,timeoutDelta);
+
+    if(!m_recording)
+    {   
+        startRecording();
+        m_lastTime    = Utilities::millis<uint64_t>();
+        m_findActive  = false;  
+    }
+    /*Stopping the recording when the either the bag size / time condition
+    is satisfied*/
+    else if(bagSizeCondition || bagTimeCondition)
+    {
+        stopRecording(); 
+        m_lastTime    = Utilities::millis<uint64_t>();  
+    }
+
+    /*Updates all the files except active one in the m_fileNames*/
+    GetBagFiles(m_fileNames);
+    GetFolderSize();
+    //std::cout << "Time : "<< timeoutDelta << std::endl;
 }
 
-
 /**
-* @brief Ensures the folder doesn't exceeds the bag numbers/sizes than predefined values
-* This will take care of the unhandled previous bags ,if any
+* @brief Timer that controls the clearing of older ros bags
 */
-
-void RosBagRecorder::autoBagDeletion()
+void RosBagRecorder::clearTimerCallback(const ros::TimerEvent &e)
 {
-    while(ros::ok())
+   
+    for(int i=0; i < m_fileNames.size(); i++)
     {
-        m_currentTime  = Utilities::millis<uint64_t>();
-        auto diffTime  = m_currentTime - m_previousTime;
-        if(m_currentTime - m_previousTime > (1000*BAGDELETIONSECONDS))
+        std::string bagAddress = m_rosBagFolder +"/"+ m_fileNames[i];
+
+        bool oldFileDetected  = (timeFromLastModification(bagAddress) > (m_oldFileDeletionTime*MINUTETOSECONDS));
+        bool folderSizeExceed = (m_totalBagsSize > m_maxFolderSize); 
+        bool splitSizeExceed  = (m_errorQueue.size() > m_maxSplit);
+        //ROS_INFO("Files to be removed : %s  time : %d ",bagAddress.c_str(),timeFromLastModification(bagAddress));
+        /*If older files are found*/
+        if(oldFileDetected)
         {
-            /*Finds the currently active bag*/
-            
-            if(m_findActive == false)
-            {
-                findActiveBag();
-            }
-            GetBagFiles(m_fileNames);
-            GetFolderSize();
-
-
-            for(int i=0; i < m_fileNames.size(); i++)
-            {
-                std::string bagAddress = m_rosBagFolder +"/"+ m_fileNames[i];
-
-                bool oldFileDetected  = (timeFromLastModification(bagAddress) > (m_oldFileDeletionTime*MINUTETOSECONDS));
-                bool folderSizeExceed = (m_totalBagsSize > m_maxFolderSize); 
-                bool splitSizeExceed  = (m_errorQueue.size() > m_maxSplit);
-                //ROS_INFO("Files to be removed : %s  time : %d ",bagAddress.c_str(),timeFromLastModification(bagAddress));
-                /*If older files are found*/
-                if(oldFileDetected)
-                {
-                    std::unique_lock<std::mutex> oldfilelock(m_mutex);
-                    removeBagFile(bagAddress);
-                    m_fileNames.erase(std::remove(m_fileNames.begin(), m_fileNames.end(), m_fileNames[i]), m_fileNames.end());
-                    ROS_INFO("Old bag detected and removed");
-                }
-                /*In case if total bag size greater than max size alloted,clear all*/
-                else if((folderSizeExceed) || (splitSizeExceed))
-                {
-                    std::unique_lock<std::mutex> excessfilelock(m_mutex);
-                    removeAllExcessFiles();
-                    ROS_INFO("Folder size or split size exceed condition");
-                    //m_fileNames.erase(std::remove(m_fileNames.begin(), m_fileNames.end(), m_fileNames[i]), m_fileNames.end());    
-                }
-            }
-
-            /*clearing the priority queue*/
-
-            /*Ideally not reqd ,but to use priority queue clearing of both vector and
-            p.queue are reqd,otherwise it might lead to duplication of values in p.queue*/
-            m_fileNames.clear();
-            m_fileNames.resize(0);
-            m_errorQueue = std::priority_queue<BagInfo, std::vector<BagInfo>, CompareError>();
-
-
-
-           // ROS_WARN("In test function %d",diffTime);
-            m_previousTime = m_currentTime;
-
+            std::unique_lock<std::mutex> oldfilelock(m_mutex);
+            removeBagFile(bagAddress);
+            m_fileNames.erase(std::remove(m_fileNames.begin(), m_fileNames.end(), m_fileNames[i]), m_fileNames.end());
         }
-        
-        /*Adding some sleep so as the while loop not draining out the entire CPU*/
-        sleep(10);
+        /*In case if total bag size greater than max size alloted,clear all*/
+        else if((folderSizeExceed) || (splitSizeExceed))
+        {
+            std::unique_lock<std::mutex> excessfilelock(m_mutex);
+            removeAllExcessFiles();
+            //m_fileNames.erase(std::remove(m_fileNames.begin(), m_fileNames.end(), m_fileNames[i]), m_fileNames.end());    
+        }
     }
-    
+
+    /*clearing the priority queue*/
+
+    /*Ideally not reqd ,but to use priority queue clearing of both vector and
+    p.queue are reqd,otherwise it might lead to duplication of values in p.queue*/
+     m_fileNames.clear();
+     m_fileNames.resize(0);
+     m_errorQueue = std::priority_queue<BagInfo, std::vector<BagInfo>, CompareError>();
 }
 
+
+/**
+* @brief Initiates the recording of ROS bags
+*/
+void RosBagRecorder::startRecording()
+{
+    bag_recorder::Rosbag recordMessage;
+    recordMessage.header.stamp = ros::Time::now();
+    recordMessage.config       = "standard";
+    recordPub.publish(recordMessage);
+    ROS_ERROR("Record started....  : %s ",m_currentFileName.c_str());
+
+    m_recording = true;
+}
+
+/**
+* @brief Stops the recording of ROS bags
+*/
+void RosBagRecorder::stopRecording()
+{
+    std_msgs::String stopMessage;
+    stopMessage.data = "standard";
+    stopPub.publish(stopMessage);
+    ROS_ERROR("Record stopped....");
+
+    m_recording = false;
+}
 
 /**
 * @brief Computes ros bag size
@@ -339,15 +353,11 @@ int main(int argc, char** argv)
     RosBagRecorder rosBagRecorder;
 
     ros::Rate rate(1);
-    std::thread t1  = std::thread(&RosBagRecorder::initializeRecording,&rosBagRecorder);
-    std::thread t2  = std::thread(&RosBagRecorder::autoBagDeletion,&rosBagRecorder);
-    //while(ros::ok())
-    //{      
-        
-        t1.join();
-        t2.join();
-    //    rate.sleep();
-    //    ros::spinOnce();
-    //}
+    
+    while(ros::ok())
+    {        
+        rate.sleep();
+        ros::spinOnce();
+    }
     return 0;
 }

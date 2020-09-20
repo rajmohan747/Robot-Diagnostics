@@ -13,6 +13,7 @@ add_message_files(
   Gui.msg
   GuiInfo.msg
   KeyValue.msg
+  KeyValues.msg
   Machine.msg
   MonitoringArray.msg
   MonitoringInfo.msg

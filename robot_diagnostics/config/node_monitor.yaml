@@ -1,14 +1,21 @@
+
 nodeFilterType: 1    # 0 - all thre registered nodes
                      # 1 - only then nodes mentioned in the list
                      # 2  - all nodes other than the mentioned ones
-nodeTimeOut : 10.0   # Time out(in seconds) which the node waits for nodes mentioned 				below,before throwing error 
-nodes: ["/node_monitors","/rosout","/system_monitors","/amcl","/robot_pose_publisher","/dummyBattery","/dummyImu"]
-maxPermissibleCpuUsage: 3.0
-maxPermissibleMemoryUsage: 3.0
-timerUpdateFrequency : 1.0
-maxPermissibleNodeRestart : 5
 
-# keys and error_levels for individual nodes.error_levels varies from 0.0 to 1.0 bases on criticality
+#List of nodes on which nodeFilterType is to be applied
+nodes: ["/node_monitors","/rosout","/system_monitors","/amcl","/robot_pose_publisher","/dummyBattery","/dummyImu"]
+
+maxPermissibleCpuUsage: 3.0    # Max  percentage of CPU usage by any node under observation
+maxPermissibleMemoryUsage: 3.0 # Max percentage of Memory usage by any node under observation
+maxPermissibleNodeRestart : 5  # Max number of restart permitted for any node under observation
+
+timerUpdateFrequency : 1.0     # Frequency in which the monitoring updation will occur
+nodeTimeOut : 10.0             # Time out(in seconds) which the node waits for nodes mentioned below,before throwing error 
+
+# Different keys and corresponding error_levels for the node
+# error_levels varies from 0.0 to 1.0 bases on criticality,with 0 being the least and 1.0 as the max
+ 
 nodeErrors: 
   - key: node_unavailable
     error_level: 0.9
@@ -18,7 +25,8 @@ nodeErrors:
     error_level: 0.3
   - key: memory_usage
     error_level: 0.3
-  - key: status
-    error_level: 10.0
+#  - key: status
+#    error_level: 0.1
 
-restart_path: "/home/addverb/ADDVERB/Session/VSCODE/Demo/catkin_ws/node_stat"
+
+# IMPORTANT : DONT EDIT THE KEY NAME.CHANGE ONLY error_level IF REQUIRED

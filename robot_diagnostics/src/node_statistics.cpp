@@ -99,8 +99,7 @@ std::string NodeStatistics::getPid()
   int max_buffer = 256;
   char buffer[max_buffer]; 
   std::string str = "rosnode info " + m_nodeName + " 2>/dev/null | grep Pid| cut -d' ' -f2";
-  //std::string str = "ps ax | grep " + m_nodeName;
-  //std::string str = "rosnode info " + m_nodeName +" 2>/dev/null | grep Pid| cut -d' ' -f2";
+
 
   /*The system command is often run first, before any output commands and the function 
   returns an integer indicating success or failure, but not the output of the string*/
@@ -127,7 +126,7 @@ std::string NodeStatistics::getPid()
 
     /*To avoid the new line character by the end of data*/
     return std::to_string(pidValue);
-    //return data.substr(0, data.length() - 1);
+   
    }	
 }
 
